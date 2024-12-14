@@ -1,0 +1,36 @@
+name: CDKTF Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        description: 'Action type to run'
+        required: true
+        options:
+          - apply
+          - destroy
+      platform:
+        type: string
+        description: 'Name of platform to be created'
+        required: true
+
+jobs:
+  manage_stack:
+    name: ${{ github.event.inputs.action }} core infra stack
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: ${{ github.event.inputs.action }} core infra stack
+        run: npm run deploy

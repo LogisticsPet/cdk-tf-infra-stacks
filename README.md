@@ -1,3 +1,6 @@
+![build](https://github.com/LogisticsPet/cdk-tf-infra-stacks/actions/workflows/build.yml/badge.svg?branch=main)
+![lint](https://github.com/LogisticsPet/cdk-tf-infra-stacks/actions/workflows/lint.yml/badge.svg?branch=main)
+
 # CDKTF Project
 
 This repository contains a CDKTF (Cloud Development Kit for Terraform) implementation to manage infrastructure on AWS. CDKTF allows you to define your infrastructure using familiar programming languages, making it easier to manage and maintain your cloud resources.
