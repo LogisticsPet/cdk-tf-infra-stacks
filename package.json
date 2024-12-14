@@ -11,10 +11,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
-    "deploy": "cdktf deploy"
+    "deploy:core": "node deployer.js deploy core",
+    "destroy:core": "node deployer.js destroy core"
   },
   "engines": {
-    "node": "23.4.0"
+    "node": "22.12.0"
   },
   "dependencies": {
     "@cdktf/provider-aws": "19.47.0",

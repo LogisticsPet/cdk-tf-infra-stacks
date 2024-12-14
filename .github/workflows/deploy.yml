@@ -8,12 +8,26 @@ on:
         description: 'Action type to run'
         required: true
         options:
-          - apply
+          - deploy
           - destroy
-      platform:
-        type: string
-        description: 'Name of platform to be created'
+      stage:
+        type: choice
+        description: 'Name of stage to be created/destroyed'
         required: true
+        options:
+          - dev
+          - test
+          - prop
+      platform:
+        type: choice
+        description: 'Name of platform to to created/destroyed'
+        required: true
+        options:
+          - core
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   manage_stack:
@@ -27,10 +41,25 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 23
+          node-version: 22.12.0
 
       - name: Install Dependencies
         run: npm install
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        id: aws-login
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          output-credentials: true
+
       - name: ${{ github.event.inputs.action }} core infra stack
-        run: npm run deploy
+        run: npm run ${{ github.event.inputs.action }}:${{ github.event.inputs.platform }} ${{ github.event.inputs.stage }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          STAGE: ${{ github.event.inputs.stage }}
+          ROOT_DOMAIN: ${{ secrets.ROOT_DOMAIN }}
+          S3_BACKEND_BUCKET: ${{ secrets.S3_BACKEND_BUCKET }}
+          S3_BACKEND_LOCK_TABLE: ${{ secrets.S3_BACKEND_LOCK_TABLE }}
