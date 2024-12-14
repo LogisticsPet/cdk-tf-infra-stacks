@@ -1,0 +1,49 @@
+{
+  "name": "infra",
+  "version": "1.0.0",
+  "main": "main.js",
+  "types": "main.ts",
+  "license": "MPL-2.0",
+  "private": true,
+  "scripts": {
+    "get": "cdktf get",
+    "synth": "cdktf synth",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky",
+    "deploy": "cdktf deploy"
+  },
+  "engines": {
+    "node": "23.4.0"
+  },
+  "dependencies": {
+    "@cdktf/provider-aws": "19.47.0",
+    "@cdktf/provider-cloudflare": "11.26.0",
+    "@cdktf/provider-kubernetes": "11.10.0",
+    "cdktf": "0.20.10",
+    "constructs": "10.4.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "22.10.2",
+    "@typescript-eslint/eslint-plugin": "8.18.0",
+    "@typescript-eslint/parser": "8.18.0",
+    "cdktf-cli": "^0.20.10",
+    "eslint": "9.17.0",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-prettier": "5.2.1",
+    "globals": "15.13.0",
+    "husky": "9.1.7",
+    "lint-staged": "15.2.11",
+    "prettier": "3.4.2",
+    "ts-node": "10.9.2",
+    "typescript": "5.7.2",
+    "typescript-eslint": "8.18.0"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
