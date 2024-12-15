@@ -2,8 +2,11 @@ import { App } from 'cdktf';
 import CorePlatform from './platforms/CorePlatform';
 import { CloudflareProvider } from '@cdktf/provider-cloudflare/lib/provider';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { GithubProvider } from '@cdktf/provider-github/lib/provider';
 
-const app = new App();
+const app = new App({
+  skipValidation: true,
+});
 
 const context = app.node.getAllContext();
 
@@ -26,6 +29,10 @@ const stackSecrets = {
   cloudflare: {
     apiToken: process.env.CLOUDFLARE_API_TOKEN || '',
   },
+  github: {
+    owner: process.env.GITHUB_OWNER || '',
+    token: process.env.GITHUB_TOKEN || '',
+  },
 };
 
 new CloudflareProvider(app, `${stackProps.stage}-cloudflare-provider`, {
@@ -40,6 +47,11 @@ new AwsProvider(
   }
 );
 
-new CorePlatform(app, `${stackProps.stage}-core`, stackProps, stackSecrets);
+new GithubProvider(app, 'github', {
+  owner: stackSecrets.github.owner,
+  token: stackSecrets.github.token,
+});
+
+new CorePlatform(app, 'core', stackProps, stackSecrets);
 
 app.synth();
