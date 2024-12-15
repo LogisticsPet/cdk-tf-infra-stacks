@@ -6,7 +6,7 @@
       "customType": "regex",
       "fileMatch": ["\\.ts$"],
       "matchStrings": [
-        "(?<repo>github\\.com\\/LogisticsPet\\/terraform-aws-eks)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+)"
+        "(?<repo>github\\.com\\/[\\w-]+\\/[\\w-]+)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+)"
       ],
       "datasourceTemplate": "git",
       "depNameTemplate": "{{{repo}}}",
