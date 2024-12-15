@@ -3,14 +3,11 @@
   "extends": ["config:recommended"],
   "customManagers": [
     {
-      "customType": "regex",
-      "fileMatch": ["\\.ts$"],
-      "matchStrings": [
-        "(?<repo>github\\.com\\/[\\w-]+\\/[\\w-]+)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+)"
+      "commitMessageTopic": "Terraform {{depName}}",
+      "fileMatch": [
+        "\\.tf$"
       ],
-      "datasourceTemplate": "git",
-      "depNameTemplate": "{{{repo}}}",
-      "versioningTemplate": "semver"
+      "pinDigests": false
     }
   ]
 }
