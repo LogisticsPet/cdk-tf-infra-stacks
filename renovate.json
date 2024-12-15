@@ -5,7 +5,7 @@
     {
       "commitMessageTopic": "Terraform {{depName}}",
       "fileMatch": [
-        "\\.tf$"
+        "\\.ts"
       ],
       "pinDigests": false
     }
