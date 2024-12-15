@@ -6,10 +6,10 @@
       "customType": "regex",
       "fileMatch": ["\\.ts$"],
       "matchStrings": [
-        "(?<repo>github\\.com\\/[\\w-]+\\/[\\w-]+)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+)"
+        "github\\.com\\/LogisticsPet\\/(?<repo>[\\w-]+)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+)"
       ],
       "datasourceTemplate": "git",
-      "depNameTemplate": "{{{repo}}}",
+      "depNameTemplate": "github.com/LogisticsPet/{{repo}}",
       "versioningTemplate": "semver"
     }
   ]
