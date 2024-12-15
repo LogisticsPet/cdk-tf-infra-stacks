@@ -6,5 +6,16 @@
   "terraformProviders": [],
   "terraformModules": [],
   "context": {
+    "stage": null,
+    "rootDomain": null,
+    "s3backend": {
+      "bucket": null,
+      "dynamodbTable": null
+    },
+    "eksConfig": {
+      "instanceType": "t3.small",
+      "nodeGroupMaxSize": 20,
+      "nodeGroupMinSize": 3
+    }
   }
 }

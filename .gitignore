@@ -1,5 +1,6 @@
 *.d.ts
 *.js
+!deployer.js
 node_modules
 cdktf.out
 cdktf.log
