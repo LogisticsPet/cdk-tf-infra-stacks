@@ -2,5 +2,18 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["\\.ts$"],
+      "matchStrings": [
+        "source:\\s*'(?<url>github\\.com/(?<repo>[\\w-]+/[\\w-]+)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+))'"
+      ],
+      "datasourceTemplate": "git",
+      "depNameTemplate": "github.com/{{{repo}}}",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "{{{currentValue}}}",
+      "replaceStringTemplate": "source: 'github.com/{{{repo}}}?ref={{{newValue}}}'"
+    }
   ]
 }
