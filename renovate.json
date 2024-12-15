@@ -3,14 +3,11 @@
   "extends": ["config:recommended"],
   "customManagers": [
     {
-      "customType": "regex",
-      "fileMatch": ["\\.ts$"],
-      "matchStrings": [
-        "github\\.com\\/LogisticsPet\\/(?<repo>[\\w-]+)\\?ref=(?<currentValue>[\\w\\d\\.\\-]+)"
+      "commitMessageTopic": "Terraform {{depName}}",
+      "fileMatch": [
+        "\\.ts"
       ],
-      "datasourceTemplate": "git",
-      "depNameTemplate": "github.com/LogisticsPet/{{repo}}",
-      "versioningTemplate": "semver"
+      "pinDigests": false
     }
   ]
 }
