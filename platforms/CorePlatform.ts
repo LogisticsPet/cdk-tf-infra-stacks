@@ -4,6 +4,9 @@ import Route53HostedZone from '../stacks/aws/Route53HostedZone';
 import ElasticKubernetesService from '../stacks/aws/ElasticKubernetesService';
 import VirtualPrivateCloud from '../stacks/aws/VirtualPrivateCloud';
 import { S3Backend } from 'cdktf';
+import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
+import { DataAwsEksClusterAuth } from '@cdktf/provider-aws/lib/data-aws-eks-cluster-auth';
+import ArgoCDStack from '../stacks/helm/ArgoCDStack';
 
 interface CorePlatformProps {
   stage: string;
@@ -81,6 +84,27 @@ export default class CorePlatform extends Construct {
         key: `${props.stage}/${secrets.aws.region}/core/${stack.node.id.split(`${id}-`)[1]}.tfstate`,
         region: secrets.aws.region,
       });
+    });
+
+    const kubernetesAuth = new DataAwsEksClusterAuth(
+      this,
+      `${id}-${eks.outputs.clusterName}-auth`,
+      {
+        name: eks.outputs.clusterName,
+      }
+    );
+
+    new HelmProvider(this, `${id}-${eks.outputs.clusterName}-helm-provider`, {
+      kubernetes: {
+        host: eks.outputs.clusterInfo.endpoint,
+        token: kubernetesAuth.token,
+        clusterCaCertificate: eks.outputs.clusterInfo.ca,
+      },
+    });
+
+    new ArgoCDStack(this, `${id}-${eks.outputs.clusterName}-argo-cd`, {
+      domain: `argo.${props.stage}.${props.rootDomain}`,
+      certIssuer: 'issuer',
     });
   }
 }
