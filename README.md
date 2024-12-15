@@ -1,5 +1,4 @@
 ![build](https://github.com/LogisticsPet/cdk-tf-infra-stacks/actions/workflows/build.yml/badge.svg?branch=main)
-![lint](https://github.com/LogisticsPet/cdk-tf-infra-stacks/actions/workflows/lint.yml/badge.svg?branch=main)
 
 ## CDKTF Infrastructure Project Documentation
 
