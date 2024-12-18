@@ -64,4 +64,4 @@ jobs:
           S3_BACKEND_BUCKET: ${{ secrets.S3_BACKEND_BUCKET }}
           S3_BACKEND_LOCK_TABLE: ${{ secrets.S3_BACKEND_LOCK_TABLE }}
           GITHUB_ORGANIZATION: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SERVICE_ACCOUNT_GITHUB_TOKEN }}
