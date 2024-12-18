@@ -11,8 +11,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
-    "deploy:core": "node deployer.js deploy core",
-    "destroy:core": "node deployer.js destroy core"
+    "deploy": "node deployer.js deploy",
+    "destroy": "node deployer.js destroy"
   },
   "engines": {
     "node": "22.12.0"
