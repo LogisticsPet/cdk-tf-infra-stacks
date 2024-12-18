@@ -14,7 +14,7 @@
     },
     "eksConfig": {
       "instanceType": "t3.small",
-      "nodeGroupMaxSize": 20,
+      "nodeGroupMaxSize": 8,
       "nodeGroupMinSize": 3
     }
   }
