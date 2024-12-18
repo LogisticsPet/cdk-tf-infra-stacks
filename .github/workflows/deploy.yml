@@ -41,7 +41,7 @@ jobs:
       - name: Cache Node modules
         uses: actions/cache@v2
         with:
-          path: ./node_modules
+          path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-modules-
@@ -49,7 +49,7 @@ jobs:
       - name: Cache Terraform Providers & Modules
         uses: actions/cache@v2
         with:
-          path: /cdktf.out/stacks/**/.terraform
+          path: cdktf.out/stacks/**/.terraform
           key: ${{ runner.os }}-terraform-plugins-${{ hashFiles('**/*.tf') }}
           restore-keys: |
             ${{ runner.os }}-terraform-plugins-
