@@ -22,6 +22,7 @@
     "@cdktf/provider-cloudflare": "11.26.0",
     "@cdktf/provider-helm": "10.4.1",
     "@cdktf/provider-kubernetes": "11.10.0",
+    "@cdktf/provider-github": "14.4.0",
     "cdktf": "0.20.10",
     "constructs": "10.4.2",
     "js-yaml": "^4.1.0"

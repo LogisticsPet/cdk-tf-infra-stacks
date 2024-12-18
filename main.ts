@@ -26,6 +26,10 @@ const stackSecrets = {
   cloudflare: {
     apiToken: process.env.CLOUDFLARE_API_TOKEN || '',
   },
+  github: {
+    org: process.env.GITHUB_ORGANIZATION || '',
+    token: process.env.GITHUB_TOKEN || '',
+  },
 };
 
 new CloudflareProvider(app, `${stackProps.stage}-cloudflare-provider`, {
@@ -40,6 +44,6 @@ new AwsProvider(
   }
 );
 
-new CorePlatform(app, `${stackProps.stage}-core`, stackProps, stackSecrets);
+new CorePlatform(app, 'core', stackProps, stackSecrets);
 
 app.synth();

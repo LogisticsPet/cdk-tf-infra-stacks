@@ -4,9 +4,24 @@ import Route53HostedZone from '../stacks/aws/Route53HostedZone';
 import ElasticKubernetesService from '../stacks/aws/ElasticKubernetesService';
 import VirtualPrivateCloud from '../stacks/aws/VirtualPrivateCloud';
 import { S3Backend } from 'cdktf';
-import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
+import ArgoCDStack from '../stacks/kubernetes/ArgoCDStack';
+import {
+  ARGO_NAMESPACE,
+  ARGO_TOOLING_PROJECT_NAME,
+  CERT_MANAGER_CLUSTER_ISSUER_NAME,
+  CORE_CLUSTER_NAME,
+  IAM_ROLE_ATTACH_POLICIES,
+  NAMESPACED_SERVICE_ACCOUNTS,
+} from '../util/constants';
+import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
+import { GithubProvider } from '@cdktf/provider-github/lib/provider';
+import GitOpsRepo from '../stacks/github/GitOpsRepo';
+import { DataAwsEksCluster } from '@cdktf/provider-aws/lib/data-aws-eks-cluster';
 import { DataAwsEksClusterAuth } from '@cdktf/provider-aws/lib/data-aws-eks-cluster-auth';
-import ArgoCDStack from '../stacks/helm/ArgoCDStack';
+import { KubernetesProvider } from '@cdktf/provider-kubernetes/lib/provider';
+import { SecretV1 } from '@cdktf/provider-kubernetes/lib/secret-v1';
+import { Manifest } from '@cdktf/provider-kubernetes/lib/manifest';
+import CustomTerraformStack from '../stacks/CustomTerraformStack';
 
 interface CorePlatformProps {
   stage: string;
@@ -28,6 +43,10 @@ interface CorePlatformSecrets {
   };
   aws: {
     region: string;
+  };
+  github: {
+    org: string;
+    token: string;
   };
 }
 
@@ -64,6 +83,7 @@ export default class CorePlatform extends Construct {
 
     const eks = new ElasticKubernetesService(this, `${id}-eks-cluster`, {
       stage: props.stage,
+      clusterName: CORE_CLUSTER_NAME,
       network: {
         vpcId: vpc.outputs.vpcId,
         publicSubnetIds: vpc.outputs.publicSubnetsIds,
@@ -77,34 +97,130 @@ export default class CorePlatform extends Construct {
       },
     });
 
-    [route53HostedZone, cloudFlareDnsRecords, vpc, eks].forEach((stack) => {
+    const argoCd = new ArgoCDStack(
+      this,
+      `${id}-${eks.outputs.clusterName}-argo-cd`,
+      {
+        domain: `argo.${props.stage}.${props.rootDomain}`,
+        certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
+        clusterName: eks.outputs.clusterName,
+        clusterCa: eks.outputs.clusterInfo.ca,
+        namespace: ARGO_NAMESPACE,
+      }
+    );
+
+    const iamRoleForToolingSA = new IamRoleForKubernetesSA(
+      this,
+      `${id}-${eks.outputs.clusterName}-iam-role`,
+      {
+        policies: IAM_ROLE_ATTACH_POLICIES,
+        oidcProviderArn: eks.outputs.oidc.providerArn,
+        namespacedServiceAccounts: NAMESPACED_SERVICE_ACCOUNTS,
+        additionalVars: {
+          external_dns_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
+          cert_manager_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
+        },
+      }
+    );
+
+    // Create GitOps Repo templating all files.
+    new GithubProvider(this, `${id}-github`, {
+      organization: secrets.github.org,
+      token: secrets.github.token,
+    });
+
+    const gitopsRepo = new GitOpsRepo(this, `${id}-gitopsRepo`, {
+      platform: 'core',
+      templateVariables: {
+        projectName: ARGO_TOOLING_PROJECT_NAME,
+        argoNamespace: ARGO_NAMESPACE,
+        serviceAccountAnnotations: {
+          'eks.amazonaws.com/role-arn': iamRoleForToolingSA.outputs.iamRoleArn,
+          'eks.amazonaws.com/sts-regional-endpoints': 'true',
+        },
+      },
+    });
+
+    const coreCluster = new DataAwsEksCluster(this, 'core-cluster', {
+      name: CORE_CLUSTER_NAME,
+    });
+
+    const coreClusterAuth = new DataAwsEksClusterAuth(
+      this,
+      'core-cluster-auth',
+      {
+        name: CORE_CLUSTER_NAME,
+      }
+    );
+
+    new KubernetesProvider(this, `${props.stage}-kubernetes`, {
+      host: coreCluster.endpoint,
+      clusterCaCertificate: coreCluster.certificateAuthority.get(0).data,
+      token: coreClusterAuth.token,
+    });
+
+    new SecretV1(this, `${id}-core-gitops-argo-repo`, {
+      metadata: {
+        namespace: ARGO_NAMESPACE,
+        name: 'core-gitops-repo',
+        labels: {
+          'argocd.argoproj.io/secret-type': 'repository',
+        },
+      },
+      data: {
+        project: ARGO_TOOLING_PROJECT_NAME,
+        type: 'git',
+        url: gitopsRepo.outputs.url,
+        username: secrets.github.org,
+        password: secrets.github.token,
+      },
+    });
+
+    new Manifest(this, `${id}-argo-app`, {
+      manifest: {
+        apiVersion: 'argoproj.io/v1alpha1', // Argo CD CRD API group
+        kind: 'Application',
+        metadata: {
+          name: `${id}-argo-app`,
+          namespace: ARGO_NAMESPACE,
+        },
+        spec: {
+          project: 'default',
+          source: {
+            repoURL: gitopsRepo.outputs.url,
+            targetRevision: 'HEAD',
+            path: './',
+          },
+          destination: {
+            server: 'https://kubernetes.default.svc',
+            namespace: '*',
+          },
+          syncPolicy: {
+            automated: {
+              prune: true,
+              selfHeal: true,
+            },
+            syncOptions: ['CreateNamespace=true'],
+          },
+        },
+      },
+    });
+
+    [
+      route53HostedZone,
+      cloudFlareDnsRecords,
+      vpc,
+      eks,
+      argoCd,
+      iamRoleForToolingSA,
+      gitopsRepo,
+    ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,
         dynamodbTable: props.backend.dynamodbTable,
         key: `${props.stage}/${secrets.aws.region}/core/${stack.node.id.split(`${id}-`)[1]}.tfstate`,
         region: secrets.aws.region,
       });
-    });
-
-    const kubernetesAuth = new DataAwsEksClusterAuth(
-      this,
-      `${id}-${eks.outputs.clusterName}-auth`,
-      {
-        name: eks.outputs.clusterName,
-      }
-    );
-
-    new HelmProvider(this, `${id}-${eks.outputs.clusterName}-helm-provider`, {
-      kubernetes: {
-        host: eks.outputs.clusterInfo.endpoint,
-        token: kubernetesAuth.token,
-        clusterCaCertificate: eks.outputs.clusterInfo.ca,
-      },
-    });
-
-    new ArgoCDStack(this, `${id}-${eks.outputs.clusterName}-argo-cd`, {
-      domain: `argo.${props.stage}.${props.rootDomain}`,
-      certIssuer: 'issuer',
     });
   }
 }

@@ -4,6 +4,7 @@ import CustomTerraformStack from '../CustomTerraformStack';
 
 interface EksClusterProps {
   stage: string;
+  clusterName?: string;
   network: {
     vpcId: string;
     publicSubnetIds: string[];
@@ -36,9 +37,11 @@ export default class ElasticKubernetesService extends CustomTerraformStack {
     super(scope, id);
 
     const module = new TerraformHclModule(this, 'eks-cluster', {
-      source: 'github.com/LogisticsPet/terraform-aws-eks?ref=0.0.12',
+      source:
+        'github.com/LogisticsPet/terraform-aws-eks?ref=heads/feature/eks-version',
       variables: {
         stack: props.stage,
+        cluster_name: props.clusterName,
         vpc_id: props.network.vpcId,
         public_subnet_ids: props.network.publicSubnetIds,
         private_subnet_ids: props.network.privateSubnetIds,
