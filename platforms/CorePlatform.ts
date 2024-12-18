@@ -16,11 +16,8 @@ import {
 import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
 import { GithubProvider } from '@cdktf/provider-github/lib/provider';
 import GitOpsRepo from '../stacks/github/GitOpsRepo';
-import { KubernetesProvider } from '@cdktf/provider-kubernetes/lib/provider';
-import { SecretV1 } from '@cdktf/provider-kubernetes/lib/secret-v1';
-import { Manifest } from '@cdktf/provider-kubernetes/lib/manifest';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
-import EksClusterAuth from '../stacks/aws/EksClusterAuth';
+import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
 
 interface CorePlatformProps {
   stage: string;
@@ -140,66 +137,18 @@ export default class CorePlatform extends Construct {
       },
     });
 
-    const clusterAuth = new EksClusterAuth(
+    const argoProvision = new ArgoProvisioner(
       this,
-      `${CORE_CLUSTER_NAME}-auth`,
-      CORE_CLUSTER_NAME
+      `${CORE_CLUSTER_NAME}-argo-tools`,
+      {
+        clusterName: CORE_CLUSTER_NAME,
+        argoNamespace: ARGO_NAMESPACE,
+        repoUrl: gitopsRepo.outputs.url,
+        projectName: ARGO_TOOLING_PROJECT_NAME,
+        githubOrg: secrets.github.org,
+        githubToken: secrets.github.token,
+      }
     );
-
-    clusterAuth.dependsOn(eks);
-
-    new KubernetesProvider(this, `${props.stage}-kubernetes`, {
-      host: clusterAuth.outputs.endpoint,
-      clusterCaCertificate: clusterAuth.outputs.ca,
-      token: clusterAuth.outputs.token,
-    });
-
-    new SecretV1(this, `${id}-core-gitops-argo-repo`, {
-      metadata: {
-        namespace: ARGO_NAMESPACE,
-        name: 'core-gitops-repo',
-        labels: {
-          'argocd.argoproj.io/secret-type': 'repository',
-        },
-      },
-      data: {
-        project: ARGO_TOOLING_PROJECT_NAME,
-        type: 'git',
-        url: gitopsRepo.outputs.url,
-        username: secrets.github.org,
-        password: secrets.github.token,
-      },
-    });
-
-    new Manifest(this, `${id}-argo-app`, {
-      manifest: {
-        apiVersion: 'argoproj.io/v1alpha1', // Argo CD CRD API group
-        kind: 'Application',
-        metadata: {
-          name: `${id}-argo-app`,
-          namespace: ARGO_NAMESPACE,
-        },
-        spec: {
-          project: 'default',
-          source: {
-            repoURL: gitopsRepo.outputs.url,
-            targetRevision: 'HEAD',
-            path: './',
-          },
-          destination: {
-            server: 'https://kubernetes.default.svc',
-            namespace: '*',
-          },
-          syncPolicy: {
-            automated: {
-              prune: true,
-              selfHeal: true,
-            },
-            syncOptions: ['CreateNamespace=true'],
-          },
-        },
-      },
-    });
 
     [
       route53HostedZone,
@@ -209,6 +158,7 @@ export default class CorePlatform extends Construct {
       argoCd,
       iamRoleForToolingSA,
       gitopsRepo,
+      argoProvision,
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,
