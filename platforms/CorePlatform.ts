@@ -112,8 +112,8 @@ export default class CorePlatform extends Construct {
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespacedServiceAccounts: NAMESPACED_SERVICE_ACCOUNTS,
         additionalVars: {
-          external_dns_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
-          cert_manager_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
+          external_dns_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
+          cert_manager_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
         },
       }
     );
