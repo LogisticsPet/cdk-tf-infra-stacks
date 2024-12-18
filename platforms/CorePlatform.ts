@@ -77,25 +77,21 @@ export default class CorePlatform extends Construct {
       stack: props.stage,
     });
 
-    const eks = new ElasticKubernetesService(
-      this,
-      `${id}-${CORE_CLUSTER_NAME}`,
-      {
-        stage: props.stage,
-        clusterName: CORE_CLUSTER_NAME,
-        network: {
-          vpcId: vpc.outputs.vpcId,
-          publicSubnetIds: vpc.outputs.publicSubnetsIds,
-          privateSubnetIds: vpc.outputs.privateSubnetsIds,
-          intraSubnetIds: vpc.outputs.intraSubnetsIds,
-        },
-        node: {
-          instanceType: props.eksConfig.instanceType,
-          groupMaxSize: props.eksConfig.nodeGroupMaxSize,
-          groupMinSize: props.eksConfig.nodeGroupMinSize,
-        },
-      }
-    );
+    const eks = new ElasticKubernetesService(this, CORE_CLUSTER_NAME, {
+      stage: props.stage,
+      clusterName: CORE_CLUSTER_NAME,
+      network: {
+        vpcId: vpc.outputs.vpcId,
+        publicSubnetIds: vpc.outputs.publicSubnetsIds,
+        privateSubnetIds: vpc.outputs.privateSubnetsIds,
+        intraSubnetIds: vpc.outputs.intraSubnetsIds,
+      },
+      node: {
+        instanceType: props.eksConfig.instanceType,
+        groupMaxSize: props.eksConfig.nodeGroupMaxSize,
+        groupMinSize: props.eksConfig.nodeGroupMinSize,
+      },
+    });
 
     const argoCd = new ArgoCDStack(this, `${id}-argo-cd`, {
       domain: `argo.${props.stage}.${props.rootDomain}`,
