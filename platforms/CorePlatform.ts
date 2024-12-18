@@ -97,7 +97,7 @@ export default class CorePlatform extends Construct {
       }
     );
 
-    const argoCd = new ArgoCDStack(this, `${id}-${CORE_CLUSTER_NAME}-argo-cd`, {
+    const argoCd = new ArgoCDStack(this, `${id}-argo-cd`, {
       domain: `argo.${props.stage}.${props.rootDomain}`,
       certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
       clusterName: eks.outputs.clusterName,
@@ -107,7 +107,7 @@ export default class CorePlatform extends Construct {
 
     const iamRoleForToolingSA = new IamRoleForKubernetesSA(
       this,
-      `${id}-${CORE_CLUSTER_NAME}-iam-role`,
+      `${id}-iam-role`,
       {
         policies: IAM_ROLE_ATTACH_POLICIES,
         oidcProviderArn: eks.outputs.oidc.providerArn,
@@ -125,21 +125,26 @@ export default class CorePlatform extends Construct {
       token: secrets.github.token,
     });
 
-    const gitopsRepo = new GitOpsRepo(this, `${id}-gitopsRepo`, {
-      platform: 'core',
-      templateVariables: {
-        projectName: ARGO_TOOLING_PROJECT_NAME,
-        argoNamespace: ARGO_NAMESPACE,
-        serviceAccountAnnotations: {
-          'eks.amazonaws.com/role-arn': iamRoleForToolingSA.outputs.iamRoleArn,
-          'eks.amazonaws.com/sts-regional-endpoints': 'true',
+    const gitopsRepo = new GitOpsRepo(
+      this,
+      `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
+      {
+        platform: 'core',
+        templateVariables: {
+          projectName: ARGO_TOOLING_PROJECT_NAME,
+          argoNamespace: ARGO_NAMESPACE,
+          serviceAccountAnnotations: {
+            'eks.amazonaws.com/role-arn':
+              iamRoleForToolingSA.outputs.iamRoleArn,
+            'eks.amazonaws.com/sts-regional-endpoints': 'true',
+          },
         },
-      },
-    });
+      }
+    );
 
     const argoProvision = new ArgoProvisioner(
       this,
-      `${id}-${CORE_CLUSTER_NAME}-argo-tools`,
+      `${id}-${ARGO_TOOLING_PROJECT_NAME}-argo-apps`,
       {
         clusterName: CORE_CLUSTER_NAME,
         argoNamespace: ARGO_NAMESPACE,
