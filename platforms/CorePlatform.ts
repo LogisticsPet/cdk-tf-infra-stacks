@@ -139,7 +139,7 @@ export default class CorePlatform extends Construct {
 
     const argoProvision = new ArgoProvisioner(
       this,
-      `${CORE_CLUSTER_NAME}-argo-tools`,
+      `${id}-${CORE_CLUSTER_NAME}-argo-tools`,
       {
         clusterName: CORE_CLUSTER_NAME,
         argoNamespace: ARGO_NAMESPACE,
