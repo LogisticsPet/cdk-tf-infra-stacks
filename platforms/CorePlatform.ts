@@ -4,20 +4,20 @@ import Route53HostedZone from '../stacks/aws/Route53HostedZone';
 import ElasticKubernetesService from '../stacks/aws/ElasticKubernetesService';
 import VirtualPrivateCloud from '../stacks/aws/VirtualPrivateCloud';
 import { S3Backend } from 'cdktf';
-import ArgoCDStack from '../stacks/kubernetes/ArgoCDStack';
+// import ArgoCDStack from '../stacks/kubernetes/ArgoCDStack';
 import {
-  ARGO_NAMESPACE,
-  ARGO_TOOLING_PROJECT_NAME,
-  CERT_MANAGER_CLUSTER_ISSUER_NAME,
+  // ARGO_NAMESPACE,
+  // ARGO_TOOLING_PROJECT_NAME,
+  // CERT_MANAGER_CLUSTER_ISSUER_NAME,
   CORE_CLUSTER_NAME,
-  IAM_ROLE_ATTACH_POLICIES,
-  NAMESPACED_SERVICE_ACCOUNTS,
+  // IAM_ROLE_ATTACH_POLICIES,
+  // NAMESPACED_SERVICE_ACCOUNTS,
 } from '../util/constants';
-import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
-import { GithubProvider } from '@cdktf/provider-github/lib/provider';
-import GitOpsRepo from '../stacks/github/GitOpsRepo';
+// import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
+// import { GithubProvider } from '@cdktf/provider-github/lib/provider';
+// import GitOpsRepo from '../stacks/github/GitOpsRepo';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
-import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
+// import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
 
 interface CorePlatformProps {
   stage: string;
@@ -97,73 +97,73 @@ export default class CorePlatform extends Construct {
       }
     );
 
-    const argoCd = new ArgoCDStack(this, `${id}-argo-cd`, {
-      domain: `argo.${props.stage}.${props.rootDomain}`,
-      certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
-      clusterName: eks.outputs.clusterName,
-      clusterCa: eks.outputs.clusterInfo.ca,
-      namespace: ARGO_NAMESPACE,
-    });
-
-    const iamRoleForToolingSA = new IamRoleForKubernetesSA(
-      this,
-      `${id}-iam-role`,
-      {
-        policies: IAM_ROLE_ATTACH_POLICIES,
-        oidcProviderArn: eks.outputs.oidc.providerArn,
-        namespacedServiceAccounts: NAMESPACED_SERVICE_ACCOUNTS,
-        additionalVars: {
-          external_dns_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
-          cert_manager_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
-        },
-      }
-    );
-
-    // Create GitOps Repo templating all files.
-    new GithubProvider(this, `${id}-github`, {
-      organization: secrets.github.org,
-      token: secrets.github.token,
-    });
-
-    const gitopsRepo = new GitOpsRepo(
-      this,
-      `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
-      {
-        platform: 'core',
-        templateVariables: {
-          projectName: ARGO_TOOLING_PROJECT_NAME,
-          argoNamespace: ARGO_NAMESPACE,
-          serviceAccountAnnotations: {
-            'eks.amazonaws.com/role-arn':
-              iamRoleForToolingSA.outputs.iamRoleArn,
-            'eks.amazonaws.com/sts-regional-endpoints': 'true',
-          },
-        },
-      }
-    );
-
-    const argoProvision = new ArgoProvisioner(
-      this,
-      `${id}-${ARGO_TOOLING_PROJECT_NAME}-argo-apps`,
-      {
-        clusterName: CORE_CLUSTER_NAME,
-        argoNamespace: ARGO_NAMESPACE,
-        repoUrl: gitopsRepo.outputs.url,
-        projectName: ARGO_TOOLING_PROJECT_NAME,
-        githubOrg: secrets.github.org,
-        githubToken: secrets.github.token,
-      }
-    );
+    // const argoCd = new ArgoCDStack(this, `${id}-argo-cd`, {
+    //   domain: `argo.${props.stage}.${props.rootDomain}`,
+    //   certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
+    //   clusterName: eks.outputs.clusterName,
+    //   clusterCa: eks.outputs.clusterInfo.ca,
+    //   namespace: ARGO_NAMESPACE,
+    // });
+    //
+    // const iamRoleForToolingSA = new IamRoleForKubernetesSA(
+    //   this,
+    //   `${id}-iam-role`,
+    //   {
+    //     policies: IAM_ROLE_ATTACH_POLICIES,
+    //     oidcProviderArn: eks.outputs.oidc.providerArn,
+    //     namespacedServiceAccounts: NAMESPACED_SERVICE_ACCOUNTS,
+    //     additionalVars: {
+    //       external_dns_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
+    //       cert_manager_hosted_zone_arns: route53HostedZone.outputs.zoneArn,
+    //     },
+    //   }
+    // );
+    //
+    // // Create GitOps Repo templating all files.
+    // new GithubProvider(this, `${id}-github`, {
+    //   organization: secrets.github.org,
+    //   token: secrets.github.token,
+    // });
+    //
+    // const gitopsRepo = new GitOpsRepo(
+    //   this,
+    //   `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
+    //   {
+    //     platform: 'core',
+    //     templateVariables: {
+    //       projectName: ARGO_TOOLING_PROJECT_NAME,
+    //       argoNamespace: ARGO_NAMESPACE,
+    //       serviceAccountAnnotations: {
+    //         'eks.amazonaws.com/role-arn':
+    //           iamRoleForToolingSA.outputs.iamRoleArn,
+    //         'eks.amazonaws.com/sts-regional-endpoints': 'true',
+    //       },
+    //     },
+    //   }
+    // );
+    //
+    // const argoProvision = new ArgoProvisioner(
+    //   this,
+    //   `${id}-${ARGO_TOOLING_PROJECT_NAME}-argo-apps`,
+    //   {
+    //     clusterName: CORE_CLUSTER_NAME,
+    //     argoNamespace: ARGO_NAMESPACE,
+    //     repoUrl: gitopsRepo.outputs.url,
+    //     projectName: ARGO_TOOLING_PROJECT_NAME,
+    //     githubOrg: secrets.github.org,
+    //     githubToken: secrets.github.token,
+    //   }
+    // );
 
     [
       route53HostedZone,
       cloudFlareDnsRecords,
       vpc,
       eks,
-      argoCd,
-      iamRoleForToolingSA,
-      gitopsRepo,
-      argoProvision,
+      // argoCd,
+      // iamRoleForToolingSA,
+      // gitopsRepo,
+      // argoProvision,
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,

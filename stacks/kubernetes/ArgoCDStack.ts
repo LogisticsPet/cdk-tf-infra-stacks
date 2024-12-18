@@ -14,7 +14,7 @@ export default class ArgoCDStack extends CustomTerraformStack {
   constructor(scope: Construct, id: string, props: ArgoCDStackProps) {
     super(scope, id);
 
-    new TerraformHclModule(this, 'eks-ingress-controller', {
+    new TerraformHclModule(this, 'argo-cd', {
       source: 'github.com/LogisticsPet/terraform-aws-argo-cd?ref=feature/cdktf',
       variables: {
         domain: props.domain,
