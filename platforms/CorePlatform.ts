@@ -16,12 +16,11 @@ import {
 import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
 import { GithubProvider } from '@cdktf/provider-github/lib/provider';
 import GitOpsRepo from '../stacks/github/GitOpsRepo';
-import { DataAwsEksCluster } from '@cdktf/provider-aws/lib/data-aws-eks-cluster';
-import { DataAwsEksClusterAuth } from '@cdktf/provider-aws/lib/data-aws-eks-cluster-auth';
 import { KubernetesProvider } from '@cdktf/provider-kubernetes/lib/provider';
 import { SecretV1 } from '@cdktf/provider-kubernetes/lib/secret-v1';
 import { Manifest } from '@cdktf/provider-kubernetes/lib/manifest';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
+import EksClusterAuth from '../stacks/aws/EksClusterAuth';
 
 interface CorePlatformProps {
   stage: string;
@@ -81,37 +80,37 @@ export default class CorePlatform extends Construct {
       stack: props.stage,
     });
 
-    const eks = new ElasticKubernetesService(this, `${id}-eks-cluster`, {
-      stage: props.stage,
-      clusterName: CORE_CLUSTER_NAME,
-      network: {
-        vpcId: vpc.outputs.vpcId,
-        publicSubnetIds: vpc.outputs.publicSubnetsIds,
-        privateSubnetIds: vpc.outputs.privateSubnetsIds,
-        intraSubnetIds: vpc.outputs.intraSubnetsIds,
-      },
-      node: {
-        instanceType: props.eksConfig.instanceType,
-        groupMaxSize: props.eksConfig.nodeGroupMaxSize,
-        groupMinSize: props.eksConfig.nodeGroupMinSize,
-      },
-    });
-
-    const argoCd = new ArgoCDStack(
+    const eks = new ElasticKubernetesService(
       this,
-      `${id}-${eks.outputs.clusterName}-argo-cd`,
+      `${id}-${CORE_CLUSTER_NAME}`,
       {
-        domain: `argo.${props.stage}.${props.rootDomain}`,
-        certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
-        clusterName: eks.outputs.clusterName,
-        clusterCa: eks.outputs.clusterInfo.ca,
-        namespace: ARGO_NAMESPACE,
+        stage: props.stage,
+        clusterName: CORE_CLUSTER_NAME,
+        network: {
+          vpcId: vpc.outputs.vpcId,
+          publicSubnetIds: vpc.outputs.publicSubnetsIds,
+          privateSubnetIds: vpc.outputs.privateSubnetsIds,
+          intraSubnetIds: vpc.outputs.intraSubnetsIds,
+        },
+        node: {
+          instanceType: props.eksConfig.instanceType,
+          groupMaxSize: props.eksConfig.nodeGroupMaxSize,
+          groupMinSize: props.eksConfig.nodeGroupMinSize,
+        },
       }
     );
 
+    const argoCd = new ArgoCDStack(this, `${id}-${CORE_CLUSTER_NAME}-argo-cd`, {
+      domain: `argo.${props.stage}.${props.rootDomain}`,
+      certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
+      clusterName: eks.outputs.clusterName,
+      clusterCa: eks.outputs.clusterInfo.ca,
+      namespace: ARGO_NAMESPACE,
+    });
+
     const iamRoleForToolingSA = new IamRoleForKubernetesSA(
       this,
-      `${id}-${eks.outputs.clusterName}-iam-role`,
+      `${id}-${CORE_CLUSTER_NAME}-iam-role`,
       {
         policies: IAM_ROLE_ATTACH_POLICIES,
         oidcProviderArn: eks.outputs.oidc.providerArn,
@@ -141,22 +140,16 @@ export default class CorePlatform extends Construct {
       },
     });
 
-    const coreCluster = new DataAwsEksCluster(this, 'core-cluster', {
-      name: CORE_CLUSTER_NAME,
-    });
-
-    const coreClusterAuth = new DataAwsEksClusterAuth(
+    const clusterAuth = new EksClusterAuth(
       this,
-      'core-cluster-auth',
-      {
-        name: CORE_CLUSTER_NAME,
-      }
+      `${CORE_CLUSTER_NAME}-auth`,
+      CORE_CLUSTER_NAME
     );
 
     new KubernetesProvider(this, `${props.stage}-kubernetes`, {
-      host: coreCluster.endpoint,
-      clusterCaCertificate: coreCluster.certificateAuthority.get(0).data,
-      token: coreClusterAuth.token,
+      host: clusterAuth.outputs.endpoint,
+      clusterCaCertificate: clusterAuth.outputs.ca,
+      token: clusterAuth.outputs.token,
     });
 
     new SecretV1(this, `${id}-core-gitops-argo-repo`, {

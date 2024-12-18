@@ -1,6 +1,6 @@
 const { exec } = require('child_process');
 
-// Capture the full task name (e.g., 'deploy:core')
+// Capture the full task name (e.g., 'deploy core')
 const task = process.argv[2];
 const platform = process.argv[3]
 

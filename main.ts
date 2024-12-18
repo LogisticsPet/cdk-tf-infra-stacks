@@ -3,7 +3,9 @@ import CorePlatform from './platforms/CorePlatform';
 import { CloudflareProvider } from '@cdktf/provider-cloudflare/lib/provider';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 
-const app = new App();
+const app = new App({
+  skipValidation: true,
+});
 
 const context = app.node.getAllContext();
 
