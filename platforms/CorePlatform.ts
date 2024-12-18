@@ -101,7 +101,6 @@ export default class CorePlatform extends Construct {
       domain: `argo.${props.stage}.${props.rootDomain}`,
       certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
       clusterName: eks.outputs.clusterName,
-      clusterCa: eks.outputs.clusterInfo.ca,
       namespace: ARGO_NAMESPACE,
     });
 

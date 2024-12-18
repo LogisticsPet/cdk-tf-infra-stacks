@@ -6,7 +6,6 @@ interface ArgoCDStackProps {
   domain: string;
   certIssuer: string;
   clusterName: string;
-  clusterCa: string;
   namespace: string;
 }
 
@@ -20,7 +19,6 @@ export default class ArgoCDStack extends CustomTerraformStack {
         domain: props.domain,
         certificate_issuer: props.certIssuer,
         cluster_name: props.clusterName,
-        cluster_ca: props.clusterCa,
         namespace: props.namespace,
       },
     });
