@@ -38,6 +38,30 @@ jobs:
         with:
           node-version: 22.12.0
 
+      - name: Cache Node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - name: Cache Terraform Providers
+        uses: actions/cache@v2
+        with:
+          path: ~/.terraform.d/plugins
+          key: ${{ runner.os }}-terraform-plugins-${{ hashFiles('**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-plugins-
+
+      - name: Cache Terraform Modules
+        uses: actions/cache@v2
+        with:
+          path: .terraform/modules
+          key: ${{ runner.os }}-terraform-modules-${{ hashFiles('**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-modules-
+
       - name: Install Dependencies
         run: npm install
 
