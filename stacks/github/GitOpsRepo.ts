@@ -17,7 +17,7 @@ export default class GitOpsRepo extends CustomTerraformStack {
   constructor(scope: Construct, id: string, props: GitOpsRepoProps) {
     super(scope, id);
 
-    const module = new TerraformHclModule(this, 'iam-role-for-sa', {
+    const module = new TerraformHclModule(this, 'gitops-repo', {
       source:
         'github.com/LogisticsPet/terraform-gitops-repo?ref=feature/initial',
       variables: {
