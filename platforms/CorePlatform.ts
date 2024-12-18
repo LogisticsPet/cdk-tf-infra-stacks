@@ -146,6 +146,8 @@ export default class CorePlatform extends Construct {
       CORE_CLUSTER_NAME
     );
 
+    clusterAuth.dependsOn(eks);
+
     new KubernetesProvider(this, `${props.stage}-kubernetes`, {
       host: clusterAuth.outputs.endpoint,
       clusterCaCertificate: clusterAuth.outputs.ca,
