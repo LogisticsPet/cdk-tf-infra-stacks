@@ -112,6 +112,7 @@ export default class CorePlatform extends Construct {
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespacedServiceAccounts: NAMESPACED_SERVICE_ACCOUNTS,
         additionalVars: {
+          cluster_autoscaler_cluster_names: [eks.outputs.clusterName],
           external_dns_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
           cert_manager_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
         },
