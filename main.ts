@@ -30,7 +30,7 @@ const stackSecrets = {
     apiToken: process.env.CLOUDFLARE_API_TOKEN || '',
   },
   github: {
-    owner: process.env.GITHUB_OWNER || '',
+    owner: process.env.GITHUB_ORG || '',
     token: process.env.GITHUB_TOKEN || '',
   },
 };
