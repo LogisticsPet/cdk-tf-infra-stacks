@@ -15,7 +15,7 @@ export default class ArgoProvisioner extends CustomTerraformStack {
   constructor(scope: Construct, id: string, props: ArgoProvisionerProps) {
     super(scope, id);
 
-    new TerraformHclModule(this, 'eks-ingress-controller', {
+    new TerraformHclModule(this, 'argo-app-provisioner', {
       source:
         'github.com/LogisticsPet/terraform-helm-argo-provisioner?ref=feature/initial',
       variables: {
