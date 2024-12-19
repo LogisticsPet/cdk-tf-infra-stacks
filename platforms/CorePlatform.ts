@@ -7,17 +7,17 @@ import { S3Backend } from 'cdktf';
 import ArgoCDStack from '../stacks/kubernetes/ArgoCDStack';
 import {
   ARGO_NAMESPACE,
-  // ARGO_TOOLING_PROJECT_NAME,
+  ARGO_TOOLING_PROJECT_NAME,
   CERT_MANAGER_CLUSTER_ISSUER_NAME,
   CORE_CLUSTER_NAME,
   IAM_ROLE_ATTACH_POLICIES,
   NAMESPACED_SERVICE_ACCOUNTS,
-  // SERVICE_ACCOUNTS,
+  SERVICE_ACCOUNTS,
 } from '../util/constants';
 import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
-// import GitOpsRepo from '../stacks/github/GitOpsRepo';
+import GitOpsRepo from '../stacks/github/GitOpsRepo';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
-// import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
+import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
 
 interface CorePlatformProps {
   stage: string;
@@ -119,44 +119,43 @@ export default class CorePlatform extends Construct {
       }
     );
 
-    // const gitopsRepo = new GitOpsRepo(
-    //   this,
-    //   `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
-    //   {
-    //     platform: 'core',
-    //
-    //     templateVariables: {
-    //       argo_namespace: ARGO_NAMESPACE,
-    //       project_name: ARGO_TOOLING_PROJECT_NAME,
-    //       apps: [
-    //         {
-    //           certmanager: {
-    //             service_account_name: SERVICE_ACCOUNTS.certManager,
-    //             service_account_annotations: {
-    //               'eks.amazonaws.com/role-arn':
-    //                 iamRoleForToolingSA.outputs.iamRoleArn,
-    //               'eks.amazonaws.com/sts-regional-endpoints': 'true',
-    //             },
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   }
-    // );
+    const gitopsRepo = new GitOpsRepo(
+      this,
+      `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
+      {
+        platform: 'core',
 
-    //
-    // const argoProvision = new ArgoProvisioner(
-    //   this,
-    //   `${id}-${ARGO_TOOLING_PROJECT_NAME}-argo-apps`,
-    //   {
-    //     clusterName: CORE_CLUSTER_NAME,
-    //     argoNamespace: ARGO_NAMESPACE,
-    //     repoUrl: gitopsRepo.outputs.url,
-    //     projectName: ARGO_TOOLING_PROJECT_NAME,
-    //     githubOrg: secrets.github.org,
-    //     githubToken: secrets.github.token,
-    //   }
-    // );
+        templateVariables: {
+          argo_namespace: ARGO_NAMESPACE,
+          project_name: ARGO_TOOLING_PROJECT_NAME,
+          apps: [
+            {
+              certmanager: {
+                service_account_name: SERVICE_ACCOUNTS.certManager,
+                service_account_annotations: {
+                  'eks.amazonaws.com/role-arn':
+                    iamRoleForToolingSA.outputs.iamRoleArn,
+                  'eks.amazonaws.com/sts-regional-endpoints': 'true',
+                },
+              },
+            },
+          ],
+        },
+      }
+    );
+
+    const argoProvision = new ArgoProvisioner(
+      this,
+      `${id}-${ARGO_TOOLING_PROJECT_NAME}-argo-apps`,
+      {
+        clusterName: CORE_CLUSTER_NAME,
+        argoNamespace: ARGO_NAMESPACE,
+        repoUrl: gitopsRepo.outputs.url,
+        projectName: ARGO_TOOLING_PROJECT_NAME,
+        githubOrg: secrets.github.org,
+        githubToken: secrets.github.token,
+      }
+    );
 
     [
       route53HostedZone,
@@ -165,8 +164,8 @@ export default class CorePlatform extends Construct {
       eks,
       argoCd,
       iamRoleForToolingSA,
-      // gitopsRepo,
-      // argoProvision,
+      gitopsRepo,
+      argoProvision,
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,
