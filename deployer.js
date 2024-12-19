@@ -16,7 +16,7 @@ if (!platform) {
   process.exit(1);
 }
 
-const command = `cdktf ${task} core-tooling-gitops-repo --auto-approve`
+const command = `cdktf ${task} '${platform}-*' --auto-approve`
 console.log(`Running command - '${command}'`);
 
 const deployProcess = exec(command);
