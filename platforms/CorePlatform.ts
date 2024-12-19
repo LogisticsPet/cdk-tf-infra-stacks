@@ -14,7 +14,6 @@ import {
   NAMESPACED_SERVICE_ACCOUNTS,
 } from '../util/constants';
 import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
-import { GithubProvider } from '@cdktf/provider-github/lib/provider';
 // import GitOpsRepo from '../stacks/github/GitOpsRepo';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
 // import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
@@ -119,18 +118,12 @@ export default class CorePlatform extends Construct {
       }
     );
 
-    // Create GitOps Repo templating all files.
-    new GithubProvider(this, `${id}-github`, {
-      organization: secrets.github.org,
-      token: secrets.github.token,
-    });
-
     // const gitopsRepo = new GitOpsRepo(
     //   this,
     //   `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
     //   {
     //     platform: 'core',
-    //     template_variables: {
+    //     templateVariables: {
     //       projectName: ARGO_TOOLING_PROJECT_NAME,
     //       argoNamespace: ARGO_NAMESPACE,
     //       serviceAccountAnnotations: {

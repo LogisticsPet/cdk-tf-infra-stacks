@@ -4,7 +4,7 @@ import { TerraformHclModule } from 'cdktf';
 
 interface GitOpsRepoProps {
   platform: string;
-  template_variables?: {};
+  templateVariables?: {};
 }
 
 interface GitOpsRepoOutputs {

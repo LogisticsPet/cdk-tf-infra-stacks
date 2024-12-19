@@ -2,6 +2,7 @@ import { App } from 'cdktf';
 import CorePlatform from './platforms/CorePlatform';
 import { CloudflareProvider } from '@cdktf/provider-cloudflare/lib/provider';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { GithubProvider } from '@cdktf/provider-github/lib/provider';
 
 const app = new App({
   skipValidation: true,
@@ -45,6 +46,11 @@ new AwsProvider(
     region: stackSecrets.aws.region,
   }
 );
+
+new GithubProvider(app, 'github', {
+  organization: stackSecrets.github.org,
+  token: stackSecrets.github.token,
+});
 
 new CorePlatform(app, 'core', stackProps, stackSecrets);
 
