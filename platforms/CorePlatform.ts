@@ -4,11 +4,11 @@ import Route53HostedZone from '../stacks/aws/Route53HostedZone';
 import ElasticKubernetesService from '../stacks/aws/ElasticKubernetesService';
 import VirtualPrivateCloud from '../stacks/aws/VirtualPrivateCloud';
 import { S3Backend } from 'cdktf';
-import ArgoCDStack from '../stacks/kubernetes/ArgoCDStack';
+// import ArgoCDStack from '../stacks/kubernetes/ArgoCDStack';
 import {
-  ARGO_NAMESPACE,
+  // ARGO_NAMESPACE,
   // ARGO_TOOLING_PROJECT_NAME,
-  CERT_MANAGER_CLUSTER_ISSUER_NAME,
+  // CERT_MANAGER_CLUSTER_ISSUER_NAME,
   CORE_CLUSTER_NAME,
   IAM_ROLE_ATTACH_POLICIES,
   NAMESPACED_SERVICE_ACCOUNTS,
@@ -96,12 +96,12 @@ export default class CorePlatform extends Construct {
       }
     );
 
-    const argoCd = new ArgoCDStack(this, `${id}-argo-cd`, {
-      domain: `argo.${props.stage}.${props.rootDomain}`,
-      certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
-      clusterName: eks.outputs.clusterName,
-      namespace: ARGO_NAMESPACE,
-    });
+    // const argoCd = new ArgoCDStack(this, `${id}-argo-cd`, {
+    //   domain: `argo.${props.stage}.${props.rootDomain}`,
+    //   certIssuer: `${props.stage}-${CERT_MANAGER_CLUSTER_ISSUER_NAME}`,
+    //   clusterName: eks.outputs.clusterName,
+    //   namespace: ARGO_NAMESPACE,
+    // });
 
     const iamRoleForToolingSA = new IamRoleForKubernetesSA(
       this,
@@ -153,7 +153,7 @@ export default class CorePlatform extends Construct {
       cloudFlareDnsRecords,
       vpc,
       eks,
-      argoCd,
+      // argoCd,
       iamRoleForToolingSA,
       // gitopsRepo,
       // argoProvision,
