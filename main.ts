@@ -47,7 +47,10 @@ new AwsProvider(
   }
 );
 
+console.log(`Github Owner - ${stackSecrets.github.org}`);
+
 new GithubProvider(app, 'github', {
+  organization: stackSecrets.github.org,
   owner: stackSecrets.github.org,
   token: stackSecrets.github.token,
 });
