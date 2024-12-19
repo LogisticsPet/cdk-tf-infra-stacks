@@ -127,17 +127,17 @@ export default class CorePlatform extends Construct {
         template_variables: {
           argo_namespace: ARGO_NAMESPACE,
           project_name: ARGO_TOOLING_PROJECT_NAME,
-          apps: [
-            {
-              certmanager: {
-                service_account_name: SERVICE_ACCOUNTS.certManager,
-                service_account_annotations: {
+          apps: {
+            certmanager: {
+              service_account: {
+                name: SERVICE_ACCOUNTS.certManager,
+                annotations: {
                   'eks.amazonaws.com/role-arn': 'test-arn',
                   'eks.amazonaws.com/sts-regional-endpoints': 'true',
                 },
               },
             },
-          ],
+          },
         },
       }
     );
