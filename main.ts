@@ -48,7 +48,7 @@ new AwsProvider(
 );
 
 new GithubProvider(app, 'github', {
-  organization: stackSecrets.github.org,
+  owner: stackSecrets.github.org,
   token: stackSecrets.github.token,
 });
 
