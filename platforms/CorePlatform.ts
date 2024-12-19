@@ -41,7 +41,7 @@ interface CorePlatformSecrets {
     region: string;
   };
   github: {
-    org: string;
+    owner: string;
     token: string;
   };
 }
@@ -151,7 +151,7 @@ export default class CorePlatform extends Construct {
         argoNamespace: ARGO_NAMESPACE,
         repoUrl: gitopsRepo.outputs.url,
         projectName: ARGO_TOOLING_PROJECT_NAME,
-        githubOrg: secrets.github.org,
+        githubOrg: secrets.github.owner,
         githubToken: secrets.github.token,
       }
     );

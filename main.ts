@@ -30,7 +30,7 @@ const stackSecrets = {
     apiToken: process.env.CLOUDFLARE_API_TOKEN || '',
   },
   github: {
-    org: process.env.GITHUB_ORGANIZATION || '',
+    owner: process.env.GITHUB_OWNER || '',
     token: process.env.GITHUB_TOKEN || '',
   },
 };
@@ -47,11 +47,8 @@ new AwsProvider(
   }
 );
 
-console.log(`Github Owner - ${stackSecrets.github.org}`);
-
 new GithubProvider(app, 'github', {
-  organization: stackSecrets.github.org,
-  owner: stackSecrets.github.org,
+  owner: stackSecrets.github.owner,
   token: stackSecrets.github.token,
 });
 
