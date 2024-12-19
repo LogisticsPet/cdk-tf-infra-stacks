@@ -124,8 +124,7 @@ export default class CorePlatform extends Construct {
       `${id}-${ARGO_TOOLING_PROJECT_NAME}-gitops-repo`,
       {
         platform: 'core',
-
-        templateVariables: {
+        template_variables: {
           argo_namespace: ARGO_NAMESPACE,
           project_name: ARGO_TOOLING_PROJECT_NAME,
           apps: [
