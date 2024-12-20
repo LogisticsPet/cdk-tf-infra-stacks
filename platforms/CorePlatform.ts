@@ -183,7 +183,7 @@ export default class CorePlatform extends Construct {
                 },
               },
             },
-            clusert_autoscaler: {
+            cluster_autoscaler: {
               name: 'cluster-autoscaler',
               namespace: NAMESPACES.clusterAutoscaler,
               values: {
