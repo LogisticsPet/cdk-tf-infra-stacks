@@ -176,13 +176,13 @@ export default class CorePlatform extends Construct {
               name: 'cert-manager',
               namespace: NAMESPACES.certManager,
               values: {
-                installCRDs: true,
+                installCRDs: 'true',
                 serviceAccount: {
                   name: SERVICE_ACCOUNTS.certManager,
                   annotations: {
                     'eks.amazonaws.com/role-arn':
                       certManagerIamRole.outputs.iamRoleArn,
-                    'eks.amazonaws.com/sts-regional-endpoints': true,
+                    'eks.amazonaws.com/sts-regional-endpoints': 'true',
                   },
                 },
               },
@@ -196,14 +196,14 @@ export default class CorePlatform extends Construct {
                   clusterName: eks.outputs.clusterName,
                 },
                 rbac: {
-                  create: true,
+                  create: 'true',
                   serviceAccount: {
-                    create: true,
+                    create: 'true',
                     name: SERVICE_ACCOUNTS.clusterAutoscaler,
                     annotations: {
                       'eks.amazonaws.com/role-arn':
                         clusterAutoscalerIamRole.outputs.iamRoleArn,
-                      'eks.amazonaws.com/sts-regional-endpoints': true,
+                      'eks.amazonaws.com/sts-regional-endpoints': 'true',
                     },
                   },
                 },
@@ -221,7 +221,7 @@ export default class CorePlatform extends Construct {
                   annotations: {
                     'eks.amazonaws.com/role-arn':
                       eksIngressIamRole.outputs.iamRoleArn,
-                    'eks.amazonaws.com/sts-regional-endpoints': true,
+                    'eks.amazonaws.com/sts-regional-endpoints': 'true',
                   },
                 },
               },
@@ -234,7 +234,7 @@ export default class CorePlatform extends Construct {
                 controller: {
                   kind: 'Deployment',
                   extraArgs: {
-                    'enable-ssl-passthrough': true,
+                    'enable-ssl-passthrough': 'true',
                   },
                 },
                 service: {
