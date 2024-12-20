@@ -211,7 +211,7 @@ export default class CorePlatform extends Construct {
               }),
             },
             aws_lb_controller: {
-              name: 'nginx-ingress-controller',
+              name: 'aws-load-balancer-controller',
               namespace: NAMESPACES.ingressController,
               values: jsyaml.dump({
                 fullnameOverride: 'aws-lb-controller',
