@@ -20,7 +20,7 @@
   "dependencies": {
     "@cdktf/provider-aws": "19.48.0",
     "@cdktf/provider-cloudflare": "11.26.0",
-    "@cdktf/provider-kubernetes": "11.10.0",
+    "@cdktf/provider-kubernetes": "11.10.1",
     "cdktf": "0.20.10",
     "constructs": "10.4.2"
   },
