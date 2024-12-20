@@ -107,6 +107,7 @@ export default class CorePlatform extends Construct {
       this,
       `${id}-cert-manager-iam-role`,
       {
+        name: `${id}-cert-manager-iam-role`,
         policies: ['attach_cert_manager_policy'],
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespace: NAMESPACES.certManager,
@@ -121,6 +122,7 @@ export default class CorePlatform extends Construct {
       this,
       `${id}-cluster-autoscaler-iam-role`,
       {
+        name: `${id}-cluster-autoscaler-iam-role`,
         policies: ['attach_cluster_autoscaler_policy'],
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespace: NAMESPACES.clusterAutoscaler,
@@ -135,6 +137,7 @@ export default class CorePlatform extends Construct {
       this,
       `${id}-external-dns-iam-role`,
       {
+        name: `${id}-external-dns-iam-role`,
         policies: ['attach_external_dns_policy'],
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespace: NAMESPACES.externalDns,
@@ -149,6 +152,7 @@ export default class CorePlatform extends Construct {
       this,
       `${id}-eks-ingress-iam-role`,
       {
+        name: `${id}-eks-ingress-iam-role`,
         policies: [
           'attach_load_balancer_controller_policy',
           'attach_load_balancer_controller_targetgroup_binding_only_policy',

@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { TerraformHclModule } from 'cdktf';
 
 interface IamRoleForKubernetesSAProps {
+  name: string;
   policies: string[];
   oidcProviderArn: string;
   namespace: string;
@@ -28,7 +29,7 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
       source:
         'terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks',
       variables: {
-        role_name: 'name',
+        role_name: props.name,
         oidc_providers: {
           main: {
             provider_arn: props.oidcProviderArn,
