@@ -205,23 +205,40 @@ export default class CorePlatform extends Construct {
                 },
               },
             },
-            ingress_controller: {
-              name: 'ingress-controller',
-              namespace: NAMESPACES.ingressController,
-              values: {
-                fullnameOverride: 'aws-lb-controller',
-                clusterName: eks.outputs.clusterName,
-                region: secrets.aws.region,
-                serviceAccount: {
-                  name: SERVICE_ACCOUNTS.ingressController,
-                  annotations: {
-                    'eks.amazonaws.com/role-arn':
-                      eksIngressIamRole.outputs.iamRoleArn,
-                    'eks.amazonaws.com/sts-regional-endpoints': true,
-                  },
-                },
-              },
-            },
+            // aws_lb_controller: {
+            //   name: 'nginx-ingress-controller',
+            //   namespace: NAMESPACES.ingressController,
+            //   values: {
+            //     fullnameOverride: 'aws-lb-controller',
+            //     clusterName: eks.outputs.clusterName,
+            //     region: secrets.aws.region,
+            //     serviceAccount: {
+            //       name: SERVICE_ACCOUNTS.ingressController,
+            //       annotations: {
+            //         'eks.amazonaws.com/role-arn':
+            //         eksIngressIamRole.outputs.iamRoleArn,
+            //         'eks.amazonaws.com/sts-regional-endpoints': true,
+            //       },
+            //     },
+            //   },
+            // },
+            // nginx_ingress_controller: {
+            //   name: 'nginx-ingress-controller',
+            //   namespace: NAMESPACES.ingressController,
+            //   values: {
+            //     fullnameOverride: 'aws-lb-controller',
+            //     clusterName: eks.outputs.clusterName,
+            //     region: secrets.aws.region,
+            //     serviceAccount: {
+            //       name: SERVICE_ACCOUNTS.ingressController,
+            //       annotations: {
+            //         'eks.amazonaws.com/role-arn':
+            //           eksIngressIamRole.outputs.iamRoleArn,
+            //         'eks.amazonaws.com/sts-regional-endpoints': true,
+            //       },
+            //     },
+            //   },
+            // },
             external_dns: {
               name: 'external-dns',
               namespace: NAMESPACES.externalDns,
