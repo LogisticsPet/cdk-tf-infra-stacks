@@ -10,8 +10,7 @@ import {
   ARGO_TOOLING_PROJECT_NAME,
   CERT_MANAGER_CLUSTER_ISSUER_NAME,
   CORE_CLUSTER_NAME,
-  IAM_ROLE_ATTACH_POLICIES,
-  NAMESPACED_SERVICE_ACCOUNTS,
+  NAMESPACES,
   SERVICE_ACCOUNTS,
 } from '../util/constants';
 import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
@@ -104,18 +103,59 @@ export default class CorePlatform extends Construct {
       namespace: ARGO_NAMESPACE,
     });
 
-    const iamRoleForToolingSA = new IamRoleForKubernetesSA(
+    const certManagerIamRole = new IamRoleForKubernetesSA(
       this,
-      `${id}-iam-role`,
+      `${id}-cert-manager-iam-role`,
       {
-        policies: IAM_ROLE_ATTACH_POLICIES,
+        policies: ['attach_cert_manager_policy'],
         oidcProviderArn: eks.outputs.oidc.providerArn,
-        namespacedServiceAccounts: NAMESPACED_SERVICE_ACCOUNTS,
+        namespace: NAMESPACES.certManager,
+        serviceAccountName: SERVICE_ACCOUNTS.certManager,
         additionalVars: {
-          cluster_autoscaler_cluster_names: [eks.outputs.clusterName],
-          external_dns_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
           cert_manager_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
         },
+      }
+    );
+
+    const clusterAutoscalerIamRole = new IamRoleForKubernetesSA(
+      this,
+      `${id}-cluster-autoscaler-iam-role`,
+      {
+        policies: ['attach_cluster_autoscaler_policy'],
+        oidcProviderArn: eks.outputs.oidc.providerArn,
+        namespace: NAMESPACES.clusterAutoscaler,
+        serviceAccountName: SERVICE_ACCOUNTS.clusterAutoscaler,
+        additionalVars: {
+          cluster_autoscaler_cluster_names: [eks.outputs.clusterName],
+        },
+      }
+    );
+
+    const externalDnsIamRole = new IamRoleForKubernetesSA(
+      this,
+      `${id}-external-dns-autoscaler-iam-role`,
+      {
+        policies: ['attach_external_dns_policy'],
+        oidcProviderArn: eks.outputs.oidc.providerArn,
+        namespace: NAMESPACES.externalDns,
+        serviceAccountName: SERVICE_ACCOUNTS.externalDns,
+        additionalVars: {
+          external_dns_hosted_zone_arns: [route53HostedZone.outputs.zoneArn],
+        },
+      }
+    );
+
+    const eksIngressIamRole = new IamRoleForKubernetesSA(
+      this,
+      `${id}-eks-ingress-iam-role`,
+      {
+        policies: [
+          'attach_load_balancer_controller_policy',
+          'attach_load_balancer_controller_targetgroup_binding_only_policy',
+        ],
+        oidcProviderArn: eks.outputs.oidc.providerArn,
+        namespace: NAMESPACES.ingressController,
+        serviceAccountName: SERVICE_ACCOUNTS.ingressController,
       }
     );
 
@@ -129,9 +169,73 @@ export default class CorePlatform extends Construct {
           project_name: ARGO_TOOLING_PROJECT_NAME,
           apps: {
             certmanager: {
-              service_account: {
-                name: SERVICE_ACCOUNTS.certManager,
-                iam_role_arn: iamRoleForToolingSA.outputs.iamRoleArn,
+              name: 'cert-manager',
+              namespace: NAMESPACES.certManager,
+              values: {
+                installCRDs: true,
+                serviceAccount: {
+                  name: SERVICE_ACCOUNTS.certManager,
+                  annotations: {
+                    'eks.amazonaws.com/role-arn':
+                      certManagerIamRole.outputs.iamRoleArn,
+                    'eks.amazonaws.com/sts-regional-endpoints': true,
+                  },
+                },
+              },
+            },
+            clusert_autoscaler: {
+              name: 'cluster-autoscaler',
+              namespace: NAMESPACES.clusterAutoscaler,
+              values: {
+                awsRegion: secrets.aws.region,
+                autoDiscovery: {
+                  clusterName: eks.outputs.clusterName,
+                },
+                rbac: {
+                  create: true,
+                  serviceAccount: {
+                    create: true,
+                    name: SERVICE_ACCOUNTS.clusterAutoscaler,
+                    annotations: {
+                      'eks.amazonaws.com/role-arn':
+                        clusterAutoscalerIamRole.outputs.iamRoleArn,
+                      'eks.amazonaws.com/sts-regional-endpoints': true,
+                    },
+                  },
+                },
+              },
+            },
+            ingress_controller: {
+              name: 'ingress-controller',
+              namespace: NAMESPACES.ingressController,
+              values: {
+                fullnameOverride: 'aws-lb-controller',
+                clusterName: eks.outputs.clusterName,
+                region: secrets.aws.region,
+                serviceAccount: {
+                  name: SERVICE_ACCOUNTS.ingressController,
+                  annotations: {
+                    'eks.amazonaws.com/role-arn':
+                      eksIngressIamRole.outputs.iamRoleArn,
+                    'eks.amazonaws.com/sts-regional-endpoints': true,
+                  },
+                },
+              },
+            },
+            external_dns: {
+              name: 'external-dns',
+              namespace: NAMESPACES.externalDns,
+              values: {
+                fullnameOverride: 'external-dns',
+                policy: 'sync',
+                serviceAccount: {
+                  name: SERVICE_ACCOUNTS.externalDns,
+                  annotations: {
+                    'eks.amazonaws.com/role-arn':
+                      externalDnsIamRole.outputs.iamRoleArn,
+                    'eks.amazonaws.com/sts-regional-endpoints': true,
+                  },
+                },
               },
             },
           },
@@ -157,9 +261,14 @@ export default class CorePlatform extends Construct {
       vpc,
       eks,
       argoCd,
-      iamRoleForToolingSA,
+      certManagerIamRole,
       gitopsRepo,
       argoProvision,
+      certManagerIamRole,
+      clusterAutoscalerIamRole,
+      externalDnsIamRole,
+      certManagerIamRole,
+      eksIngressIamRole,
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,

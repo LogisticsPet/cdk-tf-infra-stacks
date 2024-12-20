@@ -5,7 +5,8 @@ import { TerraformHclModule } from 'cdktf';
 interface IamRoleForKubernetesSAProps {
   policies: string[];
   oidcProviderArn: string;
-  namespacedServiceAccounts: string[];
+  namespace: string;
+  serviceAccountName: string;
   additionalVars?: {};
 }
 
@@ -31,7 +32,9 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
         oidc_providers: {
           main: {
             provider_arn: props.oidcProviderArn,
-            namespace_service_accounts: props.namespacedServiceAccounts,
+            namespace_service_accounts: [
+              `${props.namespace}:${props.serviceAccountName}`,
+            ],
           },
         },
         ...generatePolicyStructure(props),
