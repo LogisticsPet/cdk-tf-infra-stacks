@@ -4,7 +4,7 @@ import { TerraformHclModule } from 'cdktf';
 
 interface GitOpsRepoProps {
   platform: string;
-  template_variables?: {};
+  templateVariables?: {};
 }
 
 interface GitOpsRepoOutputs {
@@ -21,7 +21,8 @@ export default class GitOpsRepo extends CustomTerraformStack {
       source:
         'github.com/LogisticsPet/terraform-gitops-repo?ref=feature/initial',
       variables: {
-        ...props,
+        platform: props.platform,
+        template_variables: props.templateVariables,
       },
     });
 
