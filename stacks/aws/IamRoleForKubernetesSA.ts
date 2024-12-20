@@ -24,7 +24,7 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
   ) {
     super(scope, id);
 
-    const module = new TerraformHclModule(this, 'iam-role-for-sa', {
+    const module = new TerraformHclModule(this, id, {
       source:
         'terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks',
       variables: {

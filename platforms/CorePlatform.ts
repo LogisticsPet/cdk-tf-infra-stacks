@@ -133,7 +133,7 @@ export default class CorePlatform extends Construct {
 
     const externalDnsIamRole = new IamRoleForKubernetesSA(
       this,
-      `${id}-external-dns-autoscaler-iam-role`,
+      `${id}-external-dns-iam-role`,
       {
         policies: ['attach_external_dns_policy'],
         oidcProviderArn: eks.outputs.oidc.providerArn,
@@ -278,13 +278,11 @@ export default class CorePlatform extends Construct {
       vpc,
       eks,
       argoCd,
-      certManagerIamRole,
       gitopsRepo,
       argoProvision,
       certManagerIamRole,
       clusterAutoscalerIamRole,
       externalDnsIamRole,
-      certManagerIamRole,
       eksIngressIamRole,
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
