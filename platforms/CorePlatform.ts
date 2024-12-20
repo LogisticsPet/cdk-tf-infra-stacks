@@ -17,6 +17,7 @@ import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
 import GitOpsRepo from '../stacks/github/GitOpsRepo';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
 import ArgoProvisioner from '../stacks/kubernetes/ArgoProvisioner';
+import jsyaml = require('js-yaml');
 
 interface CorePlatformProps {
   stage: string;
@@ -175,7 +176,7 @@ export default class CorePlatform extends Construct {
             certmanager: {
               name: 'cert-manager',
               namespace: NAMESPACES.certManager,
-              values: {
+              values: jsyaml.dump({
                 installCRDs: 'true',
                 serviceAccount: {
                   name: SERVICE_ACCOUNTS.certManager,
@@ -185,12 +186,12 @@ export default class CorePlatform extends Construct {
                     'eks.amazonaws.com/sts-regional-endpoints': 'true',
                   },
                 },
-              },
+              }),
             },
             cluster_autoscaler: {
               name: 'cluster-autoscaler',
               namespace: NAMESPACES.clusterAutoscaler,
-              values: {
+              values: jsyaml.dump({
                 awsRegion: secrets.aws.region,
                 autoDiscovery: {
                   clusterName: eks.outputs.clusterName,
@@ -207,12 +208,12 @@ export default class CorePlatform extends Construct {
                     },
                   },
                 },
-              },
+              }),
             },
             aws_lb_controller: {
               name: 'nginx-ingress-controller',
               namespace: NAMESPACES.ingressController,
-              values: {
+              values: jsyaml.dump({
                 fullnameOverride: 'aws-lb-controller',
                 clusterName: eks.outputs.clusterName,
                 region: secrets.aws.region,
@@ -224,12 +225,12 @@ export default class CorePlatform extends Construct {
                     'eks.amazonaws.com/sts-regional-endpoints': 'true',
                   },
                 },
-              },
+              }),
             },
             nginx_ingress_controller: {
               name: 'nginx-ingress-controller',
               namespace: NAMESPACES.ingressController,
-              values: {
+              values: jsyaml.dump({
                 fullnameOverride: 'nginx-ingress',
                 controller: {
                   kind: 'Deployment',
@@ -247,12 +248,12 @@ export default class CorePlatform extends Construct {
                       'internet-facing',
                   },
                 },
-              },
+              }),
             },
             external_dns: {
               name: 'external-dns',
               namespace: NAMESPACES.externalDns,
-              values: {
+              values: jsyaml.dump({
                 fullnameOverride: 'external-dns',
                 policy: 'sync',
                 serviceAccount: {
@@ -263,7 +264,7 @@ export default class CorePlatform extends Construct {
                     'eks.amazonaws.com/sts-regional-endpoints': 'true',
                   },
                 },
-              },
+              }),
             },
           },
         },
