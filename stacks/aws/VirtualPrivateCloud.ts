@@ -24,7 +24,7 @@ export default class VirtualPrivateCloud extends CustomTerraformStack {
     super(scope, id);
 
     const module = new TerraformHclModule(this, 'vpc', {
-      source: 'github.com/LogisticsPet/terraform-aws-vpc?ref=0.0.7',
+      source: 'github.com/LogisticsPet/terraform-aws-vpc?ref=0.0.9',
       variables: {
         stack: props.stack,
       },

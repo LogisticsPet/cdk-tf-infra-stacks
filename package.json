@@ -11,8 +11,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
-    "deploy:core": "node deployer.js deploy core",
-    "destroy:core": "node deployer.js destroy core"
+    "deploy": "node deployer.js deploy",
+    "destroy": "node deployer.js destroy"
   },
   "engines": {
     "node": "22.12.0"
@@ -20,12 +20,16 @@
   "dependencies": {
     "@cdktf/provider-aws": "19.48.1",
     "@cdktf/provider-cloudflare": "11.27.1",
+    "@cdktf/provider-helm": "10.4.1",
     "@cdktf/provider-kubernetes": "11.10.1",
+    "@cdktf/provider-github": "14.4.0",
     "cdktf": "0.20.10",
-    "constructs": "10.4.2"
+    "constructs": "10.4.2",
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "22.10.2",
     "@typescript-eslint/eslint-plugin": "8.19.0",
     "@typescript-eslint/parser": "8.19.0",
