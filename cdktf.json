@@ -13,9 +13,10 @@
       "dynamodbTable": null
     },
     "eksConfig": {
-      "instanceType": "t3.small",
-      "nodeGroupMaxSize": 20,
-      "nodeGroupMinSize": 3
+      "instanceType": "t3.large",
+      "nodeGroupMaxSize": 10,
+      "nodeGroupMinSize": 3,
+      "nodeGroupDesiredSize": 3
     }
   }
 }
