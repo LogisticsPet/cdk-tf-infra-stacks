@@ -18,7 +18,7 @@ export default class Route53HostedZone extends CustomTerraformStack {
     super(scope, id);
 
     const module = new TerraformHclModule(this, 'route53-hosted-zone', {
-      source: 'github.com/LogisticsPet/terraform-aws-route53?ref=0.0.4',
+      source: 'github.com/LogisticsPet/terraform-aws-route53?ref=0.0.6',
       variables: {
         domain: props.domain,
       },

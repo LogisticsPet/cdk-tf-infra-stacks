@@ -1,9 +1,8 @@
 const { exec } = require('child_process');
 
-// Capture the full task name (e.g., 'deploy:core')
+// Capture the full task name (e.g., 'deploy core')
 const task = process.argv[2];
 const platform = process.argv[3]
-const stage = process.argv[4]
 
 // Split the task name into command and stack
 
@@ -12,12 +11,12 @@ if (!task || task !== 'deploy' && task !== 'destroy') {
   process.exit(1);
 }
 
-if (!stage) {
-  console.error('Please provide a valid stage name (e.g. dev/test/prod).');
+if (!platform) {
+  console.error('Please provide a valid platform name (e.g. dev/test/prod).');
   process.exit(1);
 }
 
-const command = `cdktf ${task} '${stage}-${platform}-*' --auto-approve`
+const command = `cdktf ${task} '${platform}-*' --auto-approve`
 console.log(`Running command - '${command}'`);
 
 const deployProcess = exec(command);

@@ -15,15 +15,10 @@ on:
         description: 'Name of stage to be created/destroyed'
         required: true
         options:
+          - core
           - dev
           - test
           - prop
-      platform:
-        type: choice
-        description: 'Name of platform to to created/destroyed'
-        required: true
-        options:
-          - core
 
 permissions:
   id-token: write
@@ -43,6 +38,27 @@ jobs:
         with:
           node-version: 22.12.0
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10."
+
+#      - name: Cache Node modules
+#        uses: actions/cache@v4
+#        with:
+#          path: node_modules
+#          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+#          restore-keys: |
+#            ${{ runner.os }}-node-modules-
+#
+#      - name: Cache Terraform Providers & Modules
+#        uses: actions/cache@v4
+#        with:
+#          path: cdktf.out/stacks/**/.terraform
+#          key: ${{ runner.os }}-terraform-plugins-${{ hashFiles('**/*.tf') }}
+#          restore-keys: |
+#            ${{ runner.os }}-terraform-plugins-
+
       - name: Install Dependencies
         run: npm install
 
@@ -55,7 +71,7 @@ jobs:
           output-credentials: true
 
       - name: ${{ github.event.inputs.action }} core infra stack
-        run: npm run ${{ github.event.inputs.action }}:${{ github.event.inputs.platform }} ${{ github.event.inputs.stage }}
+        run: npm run ${{ github.event.inputs.action }} ${{ github.event.inputs.stage }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -63,3 +79,7 @@ jobs:
           ROOT_DOMAIN: ${{ secrets.ROOT_DOMAIN }}
           S3_BACKEND_BUCKET: ${{ secrets.S3_BACKEND_BUCKET }}
           S3_BACKEND_LOCK_TABLE: ${{ secrets.S3_BACKEND_LOCK_TABLE }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.SERVICE_ACCOUNT_GITHUB_TOKEN }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+          ACME_SERVER: ${{ secrets.ACME_SERVER }}
