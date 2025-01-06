@@ -23,7 +23,7 @@
     "@cdktf/provider-helm": "10.5.0",
     "@cdktf/provider-kubernetes": "11.10.1",
     "@cdktf/provider-github": "14.4.0",
-    "cdktf": "0.20.10",
+    "cdktf": "0.20.11",
     "constructs": "10.4.2",
     "js-yaml": "^4.1.0"
   },
