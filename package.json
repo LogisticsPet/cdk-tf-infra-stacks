@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@cdktf/provider-aws": "19.48.1",
-    "@cdktf/provider-cloudflare": "11.27.1",
+    "@cdktf/provider-cloudflare": "11.30.0",
     "@cdktf/provider-helm": "10.5.0",
     "@cdktf/provider-kubernetes": "11.10.1",
     "@cdktf/provider-github": "14.4.0",
