@@ -15,7 +15,7 @@
     "destroy": "node deployer.js destroy"
   },
   "engines": {
-    "node": "22.22.2"
+    "node": "24.14.1"
   },
   "dependencies": {
     "@cdktf/provider-aws": "21.22.1",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@eslint/js": "9.39.4",
     "@types/js-yaml": "4.0.9",
-    "@types/node": "22.19.15",
+    "@types/node": "24.12.0",
     "@typescript-eslint/eslint-plugin": "8.57.2",
     "@typescript-eslint/parser": "8.57.2",
     "cdktf-cli": "0.21.0",
