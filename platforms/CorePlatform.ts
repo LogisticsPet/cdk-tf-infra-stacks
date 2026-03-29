@@ -179,7 +179,7 @@ export default class CorePlatform extends Construct {
       clusterName: eks.outputs.clusterName,
       cluster: clusterRef,
       gitRepoUrl: secrets.github.gitopsRepoUrl,
-      gitBranch: 'main',
+      gitBranch: 'feature/initial',
       gitPath: GITOPS_PLATFORM_PATH(props.stage),
     });
 
