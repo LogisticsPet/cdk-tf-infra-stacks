@@ -83,6 +83,12 @@ export default class FluxConfigStack extends CustomTerraformStack {
       return r;
     };
 
+    const bootstrapPath = props.gitPath.replace(
+      /\/platform$/,
+      '/platform-bootstrap'
+    );
+    const appsPath = props.gitPath.replace(/\/platform$/, '/apps');
+
     // ── GitRepository source ──────────────────────────────────────────────
     kubectlManifest('flux-git-repository', {
       apiVersion: 'source.toolkit.fluxcd.io/v1',
@@ -93,6 +99,28 @@ export default class FluxConfigStack extends CustomTerraformStack {
         url: props.gitRepoUrl,
         ref: { branch: props.gitBranch ?? 'main' },
         secretRef: { name: 'flux-git-auth' },
+      },
+    });
+
+    // ── Bootstrap Kustomization (Crossplane + provider-aws-iam) ──────────
+    // Must fully reconcile — including Provider readiness — before the
+    // platform layer runs, so that iam.aws.upbound.io CRDs exist when
+    // Role/Policy/RolePolicyAttachment resources are dry-run validated.
+    kubectlManifest('flux-bootstrap-kustomization', {
+      apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
+      kind: 'Kustomization',
+      metadata: { name: 'platform-bootstrap', namespace: FLUX_NAMESPACE },
+      spec: {
+        interval: '5m0s',
+        retryInterval: '1m0s',
+        path: bootstrapPath,
+        prune: true,
+        wait: true,
+        timeout: '15m0s',
+        sourceRef: { kind: 'GitRepository', name: 'flux-system' },
+        postBuild: {
+          substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
+        },
       },
     });
 
@@ -109,6 +137,7 @@ export default class FluxConfigStack extends CustomTerraformStack {
         wait: true,
         timeout: '15m0s',
         sourceRef: { kind: 'GitRepository', name: 'flux-system' },
+        dependsOn: [{ name: 'platform-bootstrap' }],
         postBuild: {
           substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
         },
@@ -116,7 +145,6 @@ export default class FluxConfigStack extends CustomTerraformStack {
     });
 
     // ── Apps Kustomization ────────────────────────────────────────────────
-    const appsPath = props.gitPath.replace(/\/platform$/, '/apps');
 
     kubectlManifest('flux-apps-kustomization', {
       apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
