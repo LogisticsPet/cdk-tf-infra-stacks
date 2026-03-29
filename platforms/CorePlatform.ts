@@ -103,7 +103,10 @@ export default class CorePlatform extends Construct {
       `${id}-flux-image-iam-role`,
       {
         name: `${props.stage}-${ROLE_NAMES.fluxImageReflector}`,
-        policies: ['attach_amazon_ecr_readonly_policy'],
+        rolePolicyArns: {
+          ecr_readonly:
+            'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly',
+        },
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespace: NAMESPACES.flux,
         serviceAccountName: SERVICE_ACCOUNTS.fluxImageReflector,
@@ -118,15 +121,12 @@ export default class CorePlatform extends Construct {
       `${id}-crossplane-aws-iam-role`,
       {
         name: `${props.stage}-${ROLE_NAMES.crossplaneAwsProvider}`,
-        policies: [],
+        rolePolicyArns: {
+          admin: 'arn:aws:iam::aws:policy/AdministratorAccess',
+        },
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespace: NAMESPACES.crossplane,
         serviceAccountName: SERVICE_ACCOUNTS.crossplaneAwsProvider,
-        additionalVars: {
-          role_policy_arns: {
-            admin: 'arn:aws:iam::aws:policy/AdministratorAccess',
-          },
-        },
       }
     );
 

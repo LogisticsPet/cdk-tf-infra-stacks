@@ -4,11 +4,11 @@ import { TerraformHclModule } from 'cdktf';
 
 interface IamRoleForKubernetesSAProps {
   name: string;
-  policies: string[];
+  /** Map of { label: policyArn } attached via role_policy_arns. */
+  rolePolicyArns: Record<string, string>;
   oidcProviderArn: string;
   namespace: string;
   serviceAccountName: string;
-  additionalVars?: {};
 }
 
 interface IamRoleForKubernetesSAOutputs {
@@ -39,8 +39,7 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
             ],
           },
         },
-        ...generatePolicyStructure(props),
-        ...props.additionalVars,
+        role_policy_arns: props.rolePolicyArns,
       },
     });
 
@@ -49,15 +48,3 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
     };
   }
 }
-
-const generatePolicyStructure = (
-  props: IamRoleForKubernetesSAProps
-): Record<string, boolean> => {
-  return props.policies.reduce(
-    (acc, policy) => {
-      acc[policy] = true;
-      return acc;
-    },
-    {} as Record<string, boolean>
-  );
-};
