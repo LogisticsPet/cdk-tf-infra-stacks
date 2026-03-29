@@ -191,10 +191,10 @@ export default class CorePlatform extends Construct {
       cloudFlareDnsRecords,
       vpc,
       eks,
-      flux,
-      fluxConfig,
-      fluxImageIamRole,
-      crossplaneIamRole,
+      // flux,
+      // fluxConfig,
+      // fluxImageIamRole,
+      // crossplaneIamRole,
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,
