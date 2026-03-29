@@ -44,7 +44,7 @@ export default class ArgoProvisioner extends CustomTerraformStack {
 
     new TerraformHclModule(this, 'argo-app-provisioner', {
       source:
-        'github.com/LogisticsPet/terraform-helm-argo-provisioner?ref=0.0.4',
+        'github.com/LogisticsPet/terraform-helm-argo-provisioner?ref=main',
       variables: {
         cluster_name: props.clusterName,
         argo_namespace: props.argoNamespace,

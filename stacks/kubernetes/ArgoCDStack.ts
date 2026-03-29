@@ -16,7 +16,7 @@ export default class ArgoCDStack extends CustomTerraformStack {
     super(scope, id);
 
     const module = new TerraformHclModule(this, 'argo-cd', {
-      source: 'github.com/LogisticsPet/terraform-aws-argo-cd?ref=0.0.3',
+      source: 'github.com/LogisticsPet/terraform-aws-argo-cd?ref=main',
       variables: {
         domain: props.domain,
         certificate_issuer: props.certIssuer,

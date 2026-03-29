@@ -80,6 +80,5 @@ jobs:
           S3_BACKEND_BUCKET: ${{ secrets.S3_BACKEND_BUCKET }}
           S3_BACKEND_LOCK_TABLE: ${{ secrets.S3_BACKEND_LOCK_TABLE }}
           GITHUB_OWNER: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.SERVICE_ACCOUNT_GITHUB_TOKEN }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
           ACME_SERVER: ${{ secrets.ACME_SERVER }}

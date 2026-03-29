@@ -38,7 +38,7 @@ export default class ElasticKubernetesService extends CustomTerraformStack {
     super(scope, id);
 
     const module = new TerraformHclModule(this, 'eks-cluster', {
-      source: 'github.com/LogisticsPet/terraform-aws-eks?ref=0.0.15',
+      source: 'github.com/LogisticsPet/terraform-aws-eks?ref=main',
       variables: {
         stack: props.stage,
         cluster_name: props.clusterName,
