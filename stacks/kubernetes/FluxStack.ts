@@ -6,6 +6,7 @@ import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
 import { Release } from '@cdktf/provider-helm/lib/release';
 import { Secret } from '@cdktf/provider-kubernetes/lib/secret';
 import { ConfigMap } from '@cdktf/provider-kubernetes/lib/config-map';
+import { Namespace } from '@cdktf/provider-kubernetes/lib/namespace';
 import { DataAwsSecretsmanagerSecretVersion } from '@cdktf/provider-aws/lib/data-aws-secretsmanager-secret-version';
 
 /**
@@ -126,6 +127,11 @@ export default class FluxStack extends CustomTerraformStack {
       'https://'
     );
 
+    // ── Namespace ─────────────────────────────────────────────────────────
+    const fluxNamespace = new Namespace(this, 'flux-namespace', {
+      metadata: { name: this.namespace },
+    });
+
     // ── Flux controllers ──────────────────────────────────────────────────
     new Release(this, 'flux-controllers', {
       name: 'flux2',
@@ -133,9 +139,11 @@ export default class FluxStack extends CustomTerraformStack {
       chart: 'flux2',
       version: FLUX_CHART_VERSION,
       namespace: this.namespace,
-      createNamespace: true,
+      createNamespace: false,
       atomic: true,
       waitForJobs: true,
+      timeout: 900,
+      dependsOn: [fluxNamespace],
       set: [
         {
           name: 'imageAutomationController.create',
@@ -179,6 +187,7 @@ export default class FluxStack extends CustomTerraformStack {
         identity: sshPrivateKey.secretString,
         known_hosts: sshKnownHosts.secretString,
       },
+      dependsOn: [fluxNamespace],
     });
 
     // ── Platform vars ConfigMap ───────────────────────────────────────────
@@ -190,6 +199,7 @@ export default class FluxStack extends CustomTerraformStack {
         ...props.platformVars,
         OIDC_PROVIDER_URL: oidcProviderUrlStripped,
       },
+      dependsOn: [fluxNamespace],
     });
   }
 }
