@@ -82,3 +82,4 @@ jobs:
           GITHUB_OWNER: ${{ github.repository_owner }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
           ACME_SERVER: ${{ secrets.ACME_SERVER }}
+          GITOPS_REPO_URL: ${{ secrets.GITOPS_REPO_URL }}
