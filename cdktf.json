@@ -8,15 +8,9 @@
   "context": {
     "stage": null,
     "rootDomain": null,
+    "vpcCidr": null,
     "s3backend": {
-      "bucket": null,
-      "dynamodbTable": null
-    },
-    "eksConfig": {
-      "instanceType": "t3.large",
-      "nodeGroupMaxSize": 10,
-      "nodeGroupMinSize": 3,
-      "nodeGroupDesiredSize": 3
+      "bucket": null
     }
   }
 }
