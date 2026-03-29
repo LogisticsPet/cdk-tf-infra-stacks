@@ -121,13 +121,11 @@ export default class FluxStack extends CustomTerraformStack {
     });
 
     new HelmProvider(this, 'helm', {
-      kubernetes: [
-        {
-          host: props.cluster.endpoint,
-          clusterCaCertificate: Fn.base64decode(props.cluster.ca),
-          exec: [execConfig],
-        },
-      ],
+      kubernetes: {
+        host: props.cluster.endpoint,
+        clusterCaCertificate: Fn.base64decode(props.cluster.ca),
+        exec: execConfig,
+      },
     });
 
     // Strip https:// so the value stored in the ConfigMap is the bare domain
