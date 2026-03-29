@@ -91,6 +91,10 @@ export default class FluxConfigStack extends CustomTerraformStack {
       /\/platform$/,
       '/platform-providers'
     );
+    const postPlatformPath = props.gitPath.replace(
+      /\/platform$/,
+      '/platform-post'
+    );
     const appsPath = props.gitPath.replace(/\/platform$/, '/apps');
 
     // ── GitRepository source ──────────────────────────────────────────────
@@ -172,6 +176,27 @@ export default class FluxConfigStack extends CustomTerraformStack {
       },
     });
 
+    // ── Tier 4: Post-platform (CRD-dependent resources) ──────────────────
+    // Requires CRDs installed by platform tools (e.g. cert-manager.io/v1).
+    kubectlManifest('flux-post-platform-kustomization', {
+      apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
+      kind: 'Kustomization',
+      metadata: { name: 'platform-post', namespace: FLUX_NAMESPACE },
+      spec: {
+        interval: '5m0s',
+        retryInterval: '1m0s',
+        path: postPlatformPath,
+        prune: true,
+        wait: true,
+        timeout: '10m0s',
+        sourceRef: { kind: 'GitRepository', name: 'flux-system' },
+        dependsOn: [{ name: 'platform' }],
+        postBuild: {
+          substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
+        },
+      },
+    });
+
     // ── Apps Kustomization ────────────────────────────────────────────────
 
     kubectlManifest('flux-apps-kustomization', {
@@ -186,7 +211,7 @@ export default class FluxConfigStack extends CustomTerraformStack {
         wait: false,
         timeout: '10m0s',
         sourceRef: { kind: 'GitRepository', name: 'flux-system' },
-        dependsOn: [{ name: 'platform' }],
+        dependsOn: [{ name: 'platform-post' }],
         postBuild: {
           substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
         },
