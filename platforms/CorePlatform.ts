@@ -20,12 +20,6 @@ import {
 interface CorePlatformProps {
   stage: string;
   rootDomain: string;
-  eksConfig: {
-    instanceType: string;
-    nodeGroupMaxSize: number;
-    nodeGroupMinSize: number;
-    nodeGroupDesiredSize: number;
-  };
   backend: {
     bucket: string;
     dynamodbTable: string;
@@ -84,6 +78,8 @@ export default class CorePlatform extends Construct {
     });
 
     // ── Compute ────────────────────────────────────────────────────────────
+    // Auto Mode is enabled in the Terraform module (cluster_compute_config).
+    // The module creates the node IAM role and outputs its name for the NodeClass.
     const eks = new ElasticKubernetesService(
       this,
       `${id}-${CORE_CLUSTER_NAME}`,
@@ -95,12 +91,6 @@ export default class CorePlatform extends Construct {
           publicSubnetIds: vpc.outputs.publicSubnetsIds,
           privateSubnetIds: vpc.outputs.privateSubnetsIds,
           intraSubnetIds: vpc.outputs.intraSubnetsIds,
-        },
-        node: {
-          instanceType: props.eksConfig.instanceType,
-          groupMaxSize: props.eksConfig.nodeGroupMaxSize,
-          groupMinSize: props.eksConfig.nodeGroupMinSize,
-          groupDesiredSize: props.eksConfig.nodeGroupDesiredSize,
         },
       }
     );
@@ -121,17 +111,22 @@ export default class CorePlatform extends Construct {
     );
 
     // ── IRSA — Crossplane AWS provider (bootstrap: creates all other roles) ────
-    // All platform tool roles (cert-manager, autoscaler, etc.) are created by
+    // All platform tool roles (cert-manager, etc.) are created by
     // Crossplane inside Flux.
     const crossplaneIamRole = new IamRoleForKubernetesSA(
       this,
       `${id}-crossplane-aws-iam-role`,
       {
         name: `${props.stage}-${ROLE_NAMES.crossplaneAwsProvider}`,
-        policies: ['attach_admin_policy'],
+        policies: [],
         oidcProviderArn: eks.outputs.oidc.providerArn,
         namespace: NAMESPACES.crossplane,
         serviceAccountName: SERVICE_ACCOUNTS.crossplaneAwsProvider,
+        additionalVars: {
+          role_policy_arns: {
+            admin: 'arn:aws:iam::aws:policy/AdministratorAccess',
+          },
+        },
       }
     );
 
@@ -160,6 +155,7 @@ export default class CorePlatform extends Construct {
         CLUSTER_NAME: eks.outputs.clusterName,
         AWS_REGION: secrets.aws.region,
         VPC_ID: vpc.outputs.vpcId,
+        EKS_NODE_ROLE_NAME: eks.outputs.nodeRoleName,
 
         HOSTED_ZONE_ID: route53HostedZone.outputs.zoneId,
         HOSTED_ZONE_ARN: route53HostedZone.outputs.zoneArn,

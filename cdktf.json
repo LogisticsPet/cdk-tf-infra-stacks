@@ -12,12 +12,6 @@
     "s3backend": {
       "bucket": null,
       "dynamodbTable": null
-    },
-    "eksConfig": {
-      "instanceType": "t3.large",
-      "nodeGroupMaxSize": 10,
-      "nodeGroupMinSize": 3,
-      "nodeGroupDesiredSize": 3
     }
   }
 }

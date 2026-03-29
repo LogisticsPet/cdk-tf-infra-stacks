@@ -50,6 +50,8 @@ export interface FluxPlatformVars {
   CLUSTER_NAME: string;
   AWS_REGION: string;
   VPC_ID: string;
+  /** Name (not ARN) of the EC2 node IAM role used by EKS Auto Mode NodeClass. */
+  EKS_NODE_ROLE_NAME: string;
 
   // ── Route53 ────────────────────────────────────────────────────────────
   HOSTED_ZONE_ID: string;

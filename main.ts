@@ -17,7 +17,6 @@ const stackProps = {
     dynamodbTable:
       process.env.S3_BACKEND_LOCK_TABLE || context.s3backend.dynamodbTable,
   },
-  eksConfig: context.eksConfig,
 };
 
 const stackSecrets = {
