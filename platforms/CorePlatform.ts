@@ -6,6 +6,7 @@ import ElasticKubernetesService from '../stacks/aws/ElasticKubernetesService';
 import VirtualPrivateCloud from '../stacks/aws/VirtualPrivateCloud';
 import IamRoleForKubernetesSA from '../stacks/aws/IamRoleForKubernetesSA';
 import FluxStack from '../stacks/kubernetes/FluxStack';
+import FluxConfigStack from '../stacks/kubernetes/FluxConfigStack';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
 import {
   CERT_MANAGER_CLUSTER_ISSUER_NAME,
@@ -133,15 +134,16 @@ export default class CorePlatform extends Construct {
     // Points at infra/gitops-seed/platforms/{stage}/platform in this monorepo.
     // Each platform resolves to its own path; the base/ layer is shared
     // via Kustomize resources references inside those platform directories.
+    const clusterRef = {
+      endpoint: eks.outputs.clusterInfo.endpoint,
+      ca: eks.outputs.clusterInfo.ca,
+      region: secrets.aws.region,
+    };
+
+    // Step 1: install Flux controllers + SSH secret + platform-vars ConfigMap.
     const flux = new FluxStack(this, `${id}-flux`, {
       clusterName: eks.outputs.clusterName,
-      cluster: {
-        endpoint: eks.outputs.clusterInfo.endpoint,
-        ca: eks.outputs.clusterInfo.ca,
-        region: secrets.aws.region,
-      },
-      gitRepoUrl: secrets.github.gitopsRepoUrl,
-      gitBranch: 'main',
+      cluster: clusterRef,
       sshPrivateKeySecretId: secrets.github.sshPrivateKeySecretId,
       sshKnownHostsSecretId: secrets.github.sshKnownHostsSecretId,
       imageAutomation: true,
@@ -168,6 +170,16 @@ export default class CorePlatform extends Construct {
         ACME_EMAIL: secrets.acme.email,
         ACME_SERVER: secrets.acme.server,
       },
+    });
+
+    // Step 2: apply Flux CRs (GitRepository + Kustomizations).
+    // Separate stack so kubernetes_manifest plan-time CRD validation only runs
+    // after `cdktf deploy core-flux` has installed the Flux controllers.
+    const fluxConfig = new FluxConfigStack(this, `${id}-flux-config`, {
+      clusterName: eks.outputs.clusterName,
+      cluster: clusterRef,
+      gitRepoUrl: secrets.github.gitopsRepoUrl,
+      gitBranch: 'main',
       gitPath: GITOPS_PLATFORM_PATH(props.stage),
     });
 
@@ -178,6 +190,7 @@ export default class CorePlatform extends Construct {
       vpc,
       eks,
       flux,
+      fluxConfig,
       fluxImageIamRole,
       crossplaneIamRole,
     ].forEach((stack: CustomTerraformStack) => {

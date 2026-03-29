@@ -6,7 +6,6 @@ import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
 import { Release } from '@cdktf/provider-helm/lib/release';
 import { Secret } from '@cdktf/provider-kubernetes/lib/secret';
 import { ConfigMap } from '@cdktf/provider-kubernetes/lib/config-map';
-import { Manifest } from '@cdktf/provider-kubernetes/lib/manifest';
 import { DataAwsSecretsmanagerSecretVersion } from '@cdktf/provider-aws/lib/data-aws-secretsmanager-secret-version';
 
 /**
@@ -73,15 +72,6 @@ export interface FluxStackProps {
     ca: string;
     region: string;
   };
-  /** SSH URL of the GitOps repository, e.g. ssh://git@github.com/owner/repo */
-  gitRepoUrl: string;
-  gitBranch?: string;
-  /**
-   * Path inside the repo for the platform Kustomization.
-   * Defaults to ./infra/gitops-seed/platforms/core/platform
-   * but should always be set explicitly via GITOPS_PLATFORM_PATH(stage).
-   */
-  gitPath?: string;
   /** AWS Secrets Manager secret ID (name or ARN) for the SSH private key (ed25519 PEM). */
   sshPrivateKeySecretId: string;
   /** AWS Secrets Manager secret ID (name or ARN) for the SSH known_hosts content. */
@@ -137,7 +127,7 @@ export default class FluxStack extends CustomTerraformStack {
     );
 
     // ── Flux controllers ──────────────────────────────────────────────────
-    const fluxRelease = new Release(this, 'flux-controllers', {
+    new Release(this, 'flux-controllers', {
       name: 'flux2',
       repository: 'https://fluxcd-community.github.io/helm-charts',
       chart: 'flux2',
@@ -183,7 +173,7 @@ export default class FluxStack extends CustomTerraformStack {
 
     // ── GitHub auth secret ────────────────────────────────────────────────
     // SSH deploy key: single-repo scope, read-only, no personal account dependency.
-    const gitAuthSecret = new Secret(this, 'flux-git-auth', {
+    new Secret(this, 'flux-git-auth', {
       metadata: { name: 'flux-git-auth', namespace: this.namespace },
       data: {
         identity: sshPrivateKey.secretString,
@@ -194,81 +184,12 @@ export default class FluxStack extends CustomTerraformStack {
     // ── Platform vars ConfigMap ───────────────────────────────────────────
     // Flux postBuild.substituteFrom replaces ${VAR} in all manifests under
     // the Kustomization path at reconciled time.
-    const platformVarsConfigMap = new ConfigMap(this, 'flux-platform-vars', {
+    new ConfigMap(this, 'flux-platform-vars', {
       metadata: { name: 'platform-vars', namespace: this.namespace },
       data: {
         ...props.platformVars,
         OIDC_PROVIDER_URL: oidcProviderUrlStripped,
       },
-    });
-
-    // ── GitRepository source ──────────────────────────────────────────────
-    new Manifest(this, 'flux-git-repository', {
-      manifest: {
-        apiVersion: 'source.toolkit.fluxcd.io/v1',
-        kind: 'GitRepository',
-        metadata: { name: 'flux-system', namespace: this.namespace },
-        spec: {
-          interval: '1m0s',
-          url: props.gitRepoUrl,
-          ref: { branch: props.gitBranch ?? 'feature/initial-seed' },
-          secretRef: { name: 'flux-git-auth' },
-        },
-      },
-      dependsOn: [fluxRelease, gitAuthSecret],
-    });
-
-    // ── Platform Kustomization ────────────────────────────────────────────
-    // Points at platforms/{stage}/platform/ which in turn includes
-    // base/platform/ via Kustomize resources reference.
-    const platformPath =
-      props.gitPath ?? './infra/gitops-seed/platforms/core/platform';
-
-    new Manifest(this, 'flux-platform-kustomization', {
-      manifest: {
-        apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
-        kind: 'Kustomization',
-        metadata: { name: 'platform', namespace: this.namespace },
-        spec: {
-          interval: '5m0s',
-          retryInterval: '1m0s',
-          path: platformPath,
-          prune: true,
-          wait: true,
-          timeout: '15m0s',
-          sourceRef: { kind: 'GitRepository', name: 'flux-system' },
-          postBuild: {
-            substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
-          },
-        },
-      },
-      dependsOn: [fluxRelease, platformVarsConfigMap],
-    });
-
-    // ── Apps Kustomization ────────────────────────────────────────────────
-    // Mirrors the platform path structure: environments/{stage}/apps/
-    const appsPath = platformPath.replace('/platform', '/apps');
-
-    new Manifest(this, 'flux-apps-kustomization', {
-      manifest: {
-        apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
-        kind: 'Kustomization',
-        metadata: { name: 'apps', namespace: this.namespace },
-        spec: {
-          interval: '5m0s',
-          retryInterval: '1m0s',
-          path: appsPath,
-          prune: true,
-          wait: false,
-          timeout: '10m0s',
-          sourceRef: { kind: 'GitRepository', name: 'flux-system' },
-          dependsOn: [{ name: 'platform' }],
-          postBuild: {
-            substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
-          },
-        },
-      },
-      dependsOn: [fluxRelease],
     });
   }
 }
