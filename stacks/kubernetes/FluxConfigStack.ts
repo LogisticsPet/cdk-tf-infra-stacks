@@ -87,6 +87,10 @@ export default class FluxConfigStack extends CustomTerraformStack {
       /\/platform$/,
       '/platform-bootstrap'
     );
+    const providersPath = props.gitPath.replace(
+      /\/platform$/,
+      '/platform-providers'
+    );
     const appsPath = props.gitPath.replace(/\/platform$/, '/apps');
 
     // ── GitRepository source ──────────────────────────────────────────────
@@ -102,10 +106,10 @@ export default class FluxConfigStack extends CustomTerraformStack {
       },
     });
 
-    // ── Bootstrap Kustomization (Crossplane + provider-aws-iam) ──────────
-    // Must fully reconcile — including Provider readiness — before the
-    // platform layer runs, so that iam.aws.upbound.io CRDs exist when
-    // Role/Policy/RolePolicyAttachment resources are dry-run validated.
+    // ── Tier 1: Bootstrap (Crossplane HelmRelease only) ──────────────────
+    // Uses only Flux-native CRDs — applies on a blank cluster.
+    // wait: true blocks tier 2 until the Helm chart is deployed and
+    // pkg.crossplane.io CRDs are registered.
     kubectlManifest('flux-bootstrap-kustomization', {
       apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
       kind: 'Kustomization',
@@ -124,7 +128,31 @@ export default class FluxConfigStack extends CustomTerraformStack {
       },
     });
 
-    // ── Platform Kustomization ────────────────────────────────────────────
+    // ── Tier 2: Providers (RuntimeConfig + Provider + ProviderConfig) ─────
+    // Requires pkg.crossplane.io CRDs from tier 1.
+    // wait: true blocks tier 3 until provider-aws-iam is healthy and
+    // iam.aws.upbound.io CRDs are registered.
+    kubectlManifest('flux-providers-kustomization', {
+      apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
+      kind: 'Kustomization',
+      metadata: { name: 'platform-providers', namespace: FLUX_NAMESPACE },
+      spec: {
+        interval: '5m0s',
+        retryInterval: '1m0s',
+        path: providersPath,
+        prune: true,
+        wait: true,
+        timeout: '15m0s',
+        sourceRef: { kind: 'GitRepository', name: 'flux-system' },
+        dependsOn: [{ name: 'platform-bootstrap' }],
+        postBuild: {
+          substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
+        },
+      },
+    });
+
+    // ── Tier 3: Platform (tools + IAM resources) ──────────────────────────
+    // Requires iam.aws.upbound.io CRDs from tier 2.
     kubectlManifest('flux-platform-kustomization', {
       apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
       kind: 'Kustomization',
@@ -137,7 +165,7 @@ export default class FluxConfigStack extends CustomTerraformStack {
         wait: true,
         timeout: '15m0s',
         sourceRef: { kind: 'GitRepository', name: 'flux-system' },
-        dependsOn: [{ name: 'platform-bootstrap' }],
+        dependsOn: [{ name: 'platform-providers' }],
         postBuild: {
           substituteFrom: [{ kind: 'ConfigMap', name: 'platform-vars' }],
         },
