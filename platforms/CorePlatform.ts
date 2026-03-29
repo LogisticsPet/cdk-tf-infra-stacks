@@ -9,6 +9,7 @@ import FluxStack from '../stacks/kubernetes/FluxStack';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
 import {
   CERT_MANAGER_CLUSTER_ISSUER_NAME,
+  CIDR_MAPPINGS,
   CORE_CLUSTER_NAME,
   GITOPS_PLATFORM_PATH,
   NAMESPACES,
@@ -79,7 +80,7 @@ export default class CorePlatform extends Construct {
     // ── Network ────────────────────────────────────────────────────────────
     const vpc = new VirtualPrivateCloud(this, `${id}-vpc`, {
       stack: props.stage,
-      cidr: '10.0.0.0/16',
+      cidr: CIDR_MAPPINGS.CORE,
     });
 
     // ── Compute ────────────────────────────────────────────────────────────

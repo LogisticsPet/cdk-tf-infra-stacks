@@ -42,3 +42,7 @@ export const ROLE_NAMES = {
   fluxImageReflector: 'flux-image-reflector-irsa',
   crossplaneAwsProvider: 'crossplane-aws-provider-irsa',
 };
+
+export const CIDR_MAPPINGS = {
+  CORE: '10.0.0.0/16',
+};
