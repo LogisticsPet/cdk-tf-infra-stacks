@@ -10,8 +10,7 @@
     "rootDomain": null,
     "vpcCidr": null,
     "s3backend": {
-      "bucket": null,
-      "dynamodbTable": null
+      "bucket": null
     }
   }
 }

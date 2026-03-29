@@ -22,7 +22,6 @@ interface CorePlatformProps {
   rootDomain: string;
   backend: {
     bucket: string;
-    dynamodbTable: string;
   };
 }
 
@@ -179,7 +178,7 @@ export default class CorePlatform extends Construct {
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,
-        dynamodbTable: props.backend.dynamodbTable,
+        useLockfile: true,
         key: `${props.stage}/${secrets.aws.region}/${stack.node.id}.tfstate`,
         region: secrets.aws.region,
       });

@@ -14,8 +14,6 @@ const stackProps = {
   rootDomain: process.env.ROOT_DOMAIN || context.rootDomain,
   backend: {
     bucket: process.env.S3_BACKEND_BUCKET || context.s3backend.bucket,
-    dynamodbTable:
-      process.env.S3_BACKEND_LOCK_TABLE || context.s3backend.dynamodbTable,
   },
 };
 
