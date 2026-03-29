@@ -1,15 +1,13 @@
 import { Construct } from 'constructs';
 import { Fn, TerraformResource } from 'cdktf';
 import CustomTerraformStack from '../CustomTerraformStack';
+import { DataAwsEksCluster } from '@cdktf/provider-aws/lib/data-aws-eks-cluster';
 
 export interface FluxConfigStackProps {
+  /** Static cluster name (e.g. CORE_CLUSTER_NAME). Must NOT be a cross-stack token. */
   clusterName: string;
-  cluster: {
-    endpoint: string;
-    /** Base64-encoded cluster CA certificate. */
-    ca: string;
-    region: string;
-  };
+  /** AWS region — used for `aws eks get-token --region`. Plain string, not a token. */
+  region: string;
   /** SSH URL of the GitOps repository, e.g. ssh://git@github.com/owner/repo */
   gitRepoUrl: string;
   gitBranch?: string;
@@ -36,6 +34,13 @@ export default class FluxConfigStack extends CustomTerraformStack {
   constructor(scope: Construct, id: string, props: FluxConfigStackProps) {
     super(scope, id);
 
+    // Resolve cluster endpoint + CA from within this stack using a data source.
+    // This avoids cross-stack token references (module.eks-cluster.*) which
+    // cannot be resolved by addOverride's escape-hatch serialisation path.
+    const eksCluster = new DataAwsEksCluster(this, 'eks-cluster-data', {
+      name: props.clusterName,
+    });
+
     const execBlock = {
       api_version: 'client.authentication.k8s.io/v1beta1',
       command: 'aws',
@@ -45,7 +50,7 @@ export default class FluxConfigStack extends CustomTerraformStack {
         '--cluster-name',
         props.clusterName,
         '--region',
-        props.cluster.region,
+        props.region,
       ],
     };
 
@@ -58,8 +63,10 @@ export default class FluxConfigStack extends CustomTerraformStack {
 
     this.addOverride('provider.kubectl', [
       {
-        host: props.cluster.endpoint,
-        cluster_ca_certificate: Fn.base64decode(props.cluster.ca),
+        host: eksCluster.endpoint,
+        cluster_ca_certificate: Fn.base64decode(
+          eksCluster.certificateAuthority.get(0).data
+        ),
         exec: [execBlock],
       },
     ]);

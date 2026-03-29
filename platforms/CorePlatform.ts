@@ -175,9 +175,11 @@ export default class CorePlatform extends Construct {
     // Step 2: apply Flux CRs (GitRepository + Kustomizations).
     // Uses kubectl_manifest (alekc/kubectl) which skips CRD validation at plan
     // time. Stack-level dependency ensures core-flux is fully applied first.
+    // clusterName and region are plain strings (not cross-stack tokens) so that
+    // addOverride's escape-hatch path resolves them correctly.
     const fluxConfig = new FluxConfigStack(this, `${id}-flux-config`, {
-      clusterName: eks.outputs.clusterName,
-      cluster: clusterRef,
+      clusterName: CORE_CLUSTER_NAME,
+      region: secrets.aws.region,
       gitRepoUrl: secrets.github.gitopsRepoUrl,
       gitBranch: 'feature/initial',
       gitPath: GITOPS_PLATFORM_PATH(props.stage),
