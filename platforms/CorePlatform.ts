@@ -178,7 +178,8 @@ export default class CorePlatform extends Construct {
     ].forEach((stack: CustomTerraformStack) => {
       new S3Backend(stack, {
         bucket: props.backend.bucket,
-        useLockfile: true,
+        // TODO: add useLockfile: true once CDKTF adds S3BackendConfig support
+        // (use_lockfile = S3 native locking, replaces deprecated dynamodb_table)
         key: `${props.stage}/${secrets.aws.region}/${stack.node.id}.tfstate`,
         region: secrets.aws.region,
       });
