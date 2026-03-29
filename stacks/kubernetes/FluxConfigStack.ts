@@ -109,7 +109,7 @@ export default class FluxConfigStack extends CustomTerraformStack {
     });
 
     // ── Apps Kustomization ────────────────────────────────────────────────
-    const appsPath = props.gitPath.replace('/platform', '/apps');
+    const appsPath = props.gitPath.replace(/\/platform$/, '/apps');
 
     kubectlManifest('flux-apps-kustomization', {
       apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
