@@ -145,7 +145,7 @@ export default class FluxStack extends CustomTerraformStack {
     // ── GitHub auth secret ────────────────────────────────────────────────
     // SSH deploy key: single-repo scope, read-only, no personal account dependency.
     const gitAuthSecret = new Secret(this, 'flux-git-auth', {
-      metadata: [{ name: 'flux-git-auth', namespace: this.namespace }],
+      metadata: { name: 'flux-git-auth', namespace: this.namespace },
       data: {
         identity: sshPrivateKey.secretString,
         known_hosts: sshKnownHosts.secretString,
@@ -156,7 +156,7 @@ export default class FluxStack extends CustomTerraformStack {
     // Flux postBuild.substituteFrom replaces ${VAR} in all manifests under
     // the Kustomization path at reconciled time.
     const platformVarsConfigMap = new ConfigMap(this, 'flux-platform-vars', {
-      metadata: [{ name: 'platform-vars', namespace: this.namespace }],
+      metadata: { name: 'platform-vars', namespace: this.namespace },
       data: {
         ...props.platformVars,
         OIDC_PROVIDER_URL: oidcProviderUrlStripped,
