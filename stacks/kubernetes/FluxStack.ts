@@ -1,6 +1,8 @@
 import { Construct } from 'constructs';
 import { Fn } from 'cdktf';
 import CustomTerraformStack from '../CustomTerraformStack';
+import { KubernetesProvider } from '@cdktf/provider-kubernetes/lib/provider';
+import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
 import { Release } from '@cdktf/provider-helm/lib/release';
 import { Secret } from '@cdktf/provider-kubernetes/lib/secret';
 import { ConfigMap } from '@cdktf/provider-kubernetes/lib/config-map';
@@ -65,6 +67,12 @@ export interface FluxPlatformVars {
 
 export interface FluxStackProps {
   clusterName: string;
+  cluster: {
+    endpoint: string;
+    /** Base64-encoded cluster CA certificate. */
+    ca: string;
+    region: string;
+  };
   /** SSH URL of the GitOps repository, e.g. ssh://git@github.com/owner/repo */
   gitRepoUrl: string;
   gitBranch?: string;
@@ -90,6 +98,37 @@ export default class FluxStack extends CustomTerraformStack {
 
   constructor(scope: Construct, id: string, props: FluxStackProps) {
     super(scope, id);
+
+    // ── Kubernetes + Helm providers ───────────────────────────────────────
+    // Auth via aws-cli exec so no static credentials are stored in state.
+    const execConfig = {
+      apiVersion: 'client.authentication.k8s.io/v1beta1',
+      command: 'aws',
+      args: [
+        'eks',
+        'get-token',
+        '--cluster-name',
+        props.clusterName,
+        '--region',
+        props.cluster.region,
+      ],
+    };
+
+    new KubernetesProvider(this, 'kubernetes', {
+      host: props.cluster.endpoint,
+      clusterCaCertificate: Fn.base64decode(props.cluster.ca),
+      exec: [execConfig],
+    });
+
+    new HelmProvider(this, 'helm', {
+      kubernetes: [
+        {
+          host: props.cluster.endpoint,
+          clusterCaCertificate: Fn.base64decode(props.cluster.ca),
+          exec: [execConfig],
+        },
+      ],
+    });
 
     // Strip https:// so the value stored in the ConfigMap is the bare domain
     // path (e.g. oidc.eks.eu-central-1.amazonaws.com/id/XXX), which is the

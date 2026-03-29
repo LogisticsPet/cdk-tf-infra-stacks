@@ -135,6 +135,11 @@ export default class CorePlatform extends Construct {
     // via Kustomize resources references inside those platform directories.
     const flux = new FluxStack(this, `${id}-flux`, {
       clusterName: eks.outputs.clusterName,
+      cluster: {
+        endpoint: eks.outputs.clusterInfo.endpoint,
+        ca: eks.outputs.clusterInfo.ca,
+        region: secrets.aws.region,
+      },
       gitRepoUrl: secrets.github.gitopsRepoUrl,
       gitBranch: 'main',
       sshPrivateKeySecretId: secrets.github.sshPrivateKeySecretId,
