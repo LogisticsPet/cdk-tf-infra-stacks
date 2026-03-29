@@ -19,7 +19,6 @@ import {
 interface CorePlatformProps {
   stage: string;
   rootDomain: string;
-  vpcCidr: string;
   eksConfig: {
     instanceType: string;
     nodeGroupMaxSize: number;
@@ -80,7 +79,7 @@ export default class CorePlatform extends Construct {
     // ── Network ────────────────────────────────────────────────────────────
     const vpc = new VirtualPrivateCloud(this, `${id}-vpc`, {
       stack: props.stage,
-      cidr: props.vpcCidr,
+      cidr: '10.0.0.0/16',
     });
 
     // ── Compute ────────────────────────────────────────────────────────────

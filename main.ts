@@ -12,7 +12,6 @@ const context = app.node.getAllContext();
 const stackProps = {
   stage: process.env.STAGE || context.stage,
   rootDomain: process.env.ROOT_DOMAIN || context.rootDomain,
-  vpcCidr: process.env.VPC_CIDR || context.vpcCidr,
   backend: {
     bucket: process.env.S3_BACKEND_BUCKET || context.s3backend.bucket,
     dynamodbTable:
