@@ -9,7 +9,7 @@ import FluxStack from '../stacks/kubernetes/FluxStack';
 import FluxConfigStack from '../stacks/kubernetes/FluxConfigStack';
 import CustomTerraformStack from '../stacks/CustomTerraformStack';
 import {
-  // CERT_MANAGER_CLUSTER_ISSUER_NAME,
+  CERT_MANAGER_CLUSTER_ISSUER_NAME,
   CIDR_MAPPINGS,
   CORE_CLUSTER_NAME,
   GITOPS_PLATFORM_PATH,
