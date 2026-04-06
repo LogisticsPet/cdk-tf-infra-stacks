@@ -45,4 +45,5 @@ export const ROLE_NAMES = {
 
 export const CIDR_MAPPINGS = {
   CORE: '10.0.0.0/16',
+  DEV: '',
 };

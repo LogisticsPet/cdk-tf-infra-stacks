@@ -33,4 +33,3 @@ jobs:
           STAGE: "ci-test"
           ROOT_DOMAIN: ${{ secrets.ROOT_DOMAIN }}
           S3_BACKEND_BUCKET: ${{ secrets.S3_BACKEND_BUCKET }}
-          S3_BACKEND_LOCK_TABLE: ${{ secrets.S3_BACKEND_LOCK_TABLE }}

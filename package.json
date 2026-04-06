@@ -18,10 +18,6 @@
     "node": "24.14.1"
   },
   "dependencies": {
-    "@cdktf/provider-aws": "21.22.1",
-    "@cdktf/provider-cloudflare": "13.9.1",
-    "@cdktf/provider-helm": "12.1.2",
-    "@cdktf/provider-kubernetes": "12.1.1",
     "cdktf": "0.21.0",
     "constructs": "10.6.0",
     "js-yaml": "4.1.1"
