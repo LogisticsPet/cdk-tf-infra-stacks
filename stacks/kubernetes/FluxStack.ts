@@ -133,6 +133,21 @@ export default class FluxStack extends CustomTerraformStack {
     });
 
     // ── Flux controllers ──────────────────────────────────────────────────
+    // On destroy, strip finalizers from all Flux CRs before Helm removes the
+    // CRDs.  Without this, the destroy hangs: controllers are gone so nothing
+    // processes the finalizers, and Helm cannot delete the CRDs while CRs exist.
+    const fluxCrds = [
+      'helmreleases.helm.toolkit.fluxcd.io',
+      'kustomizations.kustomize.toolkit.fluxcd.io',
+      'gitrepositories.source.toolkit.fluxcd.io',
+      'helmrepositories.source.toolkit.fluxcd.io',
+      'helmcharts.source.toolkit.fluxcd.io',
+      'ocirepositories.source.toolkit.fluxcd.io',
+      'imageupdateautomations.image.toolkit.fluxcd.io',
+      'imagepolicies.image.toolkit.fluxcd.io',
+      'imagerepositories.image.toolkit.fluxcd.io',
+    ].join(' ');
+
     new Release(this, 'flux-controllers', {
       name: 'flux2',
       repository: 'https://fluxcd-community.github.io/helm-charts',
@@ -144,6 +159,23 @@ export default class FluxStack extends CustomTerraformStack {
       waitForJobs: true,
       timeout: 900,
       dependsOn: [fluxNamespace],
+      provisioners: [
+        {
+          type: 'local-exec',
+          when: 'destroy',
+          interpreter: ['/bin/bash', '-c'],
+          command: `
+aws eks update-kubeconfig --name ${props.clusterName} --region ${props.cluster.region}
+for crd in ${fluxCrds}; do
+  kubectl get "$crd" -A -o json 2>/dev/null | \
+    jq -r '.items[]? | [.metadata.namespace, .metadata.name] | @tsv' | \
+    while IFS=$'\\t' read -r ns name; do
+      kubectl patch "$crd" -n "$ns" "$name" --type=merge -p '{"metadata":{"finalizers":[]}}' 2>/dev/null || true
+    done
+done
+`.trim(),
+        },
+      ],
       set: [
         {
           name: 'imageAutomationController.create',
