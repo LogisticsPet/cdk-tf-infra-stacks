@@ -4,11 +4,18 @@ import { TerraformHclModule } from 'cdktf';
 
 interface IamRoleForKubernetesSAProps {
   name: string;
-  policies: string[];
+  /** Map of { label: policyArn } attached via role_policy_arns. */
+  rolePolicyArns: Record<string, string>;
   oidcProviderArn: string;
   namespace: string;
   serviceAccountName: string;
-  additionalVars?: {};
+  /**
+   * IAM condition test for the OIDC sub claim.
+   * Use 'StringLike' with a wildcard serviceAccountName (e.g. 'provider-aws-iam*')
+   * when the SA name is not known at deploy time (e.g. Crossplane adds a hash suffix).
+   * Defaults to 'StringEquals'.
+   */
+  assumeRoleConditionTest?: 'StringEquals' | 'StringLike';
 }
 
 interface IamRoleForKubernetesSAOutputs {
@@ -39,8 +46,10 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
             ],
           },
         },
-        ...generatePolicyStructure(props),
-        ...props.additionalVars,
+        role_policy_arns: props.rolePolicyArns,
+        ...(props.assumeRoleConditionTest && {
+          assume_role_condition_test: props.assumeRoleConditionTest,
+        }),
       },
     });
 
@@ -49,15 +58,3 @@ export default class IamRoleForKubernetesSA extends CustomTerraformStack {
     };
   }
 }
-
-const generatePolicyStructure = (
-  props: IamRoleForKubernetesSAProps
-): Record<string, boolean> => {
-  return props.policies.reduce(
-    (acc, policy) => {
-      acc[policy] = true;
-      return acc;
-    },
-    {} as Record<string, boolean>
-  );
-};

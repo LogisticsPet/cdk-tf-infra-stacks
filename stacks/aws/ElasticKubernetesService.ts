@@ -11,12 +11,6 @@ interface EksClusterProps {
     privateSubnetIds: string[];
     intraSubnetIds: string[];
   };
-  node: {
-    instanceType: string;
-    groupMaxSize: number;
-    groupMinSize: number;
-    groupDesiredSize: number;
-  };
 }
 
 interface EksClusterOutputs {
@@ -29,6 +23,8 @@ interface EksClusterOutputs {
     providerArn: string;
     providerUrl: string;
   };
+  /** Name of the EC2 node IAM role created by the module for Auto Mode nodes. */
+  nodeRoleName: string;
 }
 
 export default class ElasticKubernetesService extends CustomTerraformStack {
@@ -38,7 +34,7 @@ export default class ElasticKubernetesService extends CustomTerraformStack {
     super(scope, id);
 
     const module = new TerraformHclModule(this, 'eks-cluster', {
-      source: 'github.com/LogisticsPet/terraform-aws-eks?ref=0.0.15',
+      source: 'github.com/LogisticsPet/terraform-aws-eks?ref=0.0.16',
       variables: {
         stack: props.stage,
         cluster_name: props.clusterName,
@@ -46,10 +42,6 @@ export default class ElasticKubernetesService extends CustomTerraformStack {
         public_subnet_ids: props.network.publicSubnetIds,
         private_subnet_ids: props.network.privateSubnetIds,
         intra_subnet_ids: props.network.intraSubnetIds,
-        instance_type: props.node.instanceType,
-        nodegroup_max_size: props.node.groupMaxSize,
-        nodegroup_min_size: props.node.groupMinSize,
-        nodegroup_desired_size: props.node.groupDesiredSize,
       },
     });
 
@@ -63,6 +55,7 @@ export default class ElasticKubernetesService extends CustomTerraformStack {
         endpoint: module.getString('cluster_endpoint'),
         ca: module.getString('cluster_ca'),
       },
+      nodeRoleName: module.getString('node_iam_role_name'),
     };
   }
 }
