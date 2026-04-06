@@ -73,7 +73,6 @@ cdk-tf-infra-stack/
 | `STAGE` | Deployment stage | `core` |
 | `ROOT_DOMAIN` | Apex domain (Cloudflare) | `example.com` |
 | `S3_BACKEND_BUCKET` | Terraform state bucket | `my-tf-state` |
-| `S3_BACKEND_LOCK_TABLE` | DynamoDB lock table | `tf-lock` |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token | `...` |
 | `GITHUB_OWNER` | GitHub org or user | `LogisticsPet` |
 | `GITOPS_REPO_URL` | HTTPS URL of this monorepo (Flux source) | `https://github.com/LogisticsPet/logistics` |
