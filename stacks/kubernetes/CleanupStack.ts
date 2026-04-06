@@ -33,8 +33,8 @@ aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION"
 
 # 1. Suspend all Flux kustomizations to prevent reconciliation during teardown
 echo "--- suspending Flux kustomizations"
-kubectl patch kustomizations.kustomize.toolkit.fluxcd.io \\
-  --all -n flux-system --type=merge \\
+kubectl get kustomizations.kustomize.toolkit.fluxcd.io -n flux-system -o name 2>/dev/null | \\
+  xargs -r kubectl patch -n flux-system --type=merge \\
   -p '{"spec":{"suspend":true}}' || true
 
 # 2. Delete Crossplane IAM objects — finalizers ensure AWS resources are
@@ -56,7 +56,7 @@ fi
 echo "--- waiting for LoadBalancer Services to be removed"
 for i in $(seq 1 12); do
   LB_COUNT=$(kubectl get svc -n istio-system --no-headers \\
-    -o custom-columns=T:.spec.type 2>/dev/null | grep -c "^LoadBalancer$" || echo 0)
+    -o custom-columns=T:.spec.type 2>/dev/null | grep "^LoadBalancer$" | wc -l | tr -d ' ')
   echo "  LoadBalancer services remaining: $LB_COUNT (attempt $i/12)"
   [ "$LB_COUNT" = "0" ] && break
   sleep 10
