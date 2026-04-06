@@ -185,7 +185,7 @@ export default class CorePlatform extends Construct {
       clusterName: CORE_CLUSTER_NAME,
       region: secrets.aws.region,
       gitRepoUrl: secrets.github.gitopsRepoUrl,
-      gitBranch: 'feature/initial-seed',
+      gitBranch: 'main',
       gitPath: GITOPS_PLATFORM_PATH(props.stage),
     });
 
