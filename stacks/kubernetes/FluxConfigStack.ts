@@ -1,7 +1,7 @@
 import { Construct } from 'constructs';
 import { Fn, TerraformResource } from 'cdktf';
 import CustomTerraformStack from '../CustomTerraformStack';
-import { DataAwsEksCluster } from '@cdktf/provider-aws/lib/data-aws-eks-cluster';
+import { DataAwsEksCluster } from '../../.gen/providers/aws/data-aws-eks-cluster';
 
 export interface FluxConfigStackProps {
   /** Static cluster name (e.g. CORE_CLUSTER_NAME). Must NOT be a cross-stack token. */

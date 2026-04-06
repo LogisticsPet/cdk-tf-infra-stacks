@@ -3,7 +3,12 @@
   "app": "npx ts-node main.ts",
   "projectId": "923d276b-b1fe-4fe8-aa3b-5b6b1f42312a",
   "sendCrashReports": "false",
-  "terraformProviders": [],
+  "terraformProviders": [
+    "hashicorp/aws@~> 5.0",
+    "hashicorp/helm@~> 2.0",
+    "hashicorp/kubernetes@~> 2.0",
+    "cloudflare/cloudflare@~> 4.0"
+  ],
   "terraformModules": [],
   "context": {
     "stage": null,

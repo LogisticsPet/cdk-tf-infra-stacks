@@ -1,7 +1,7 @@
 import { App } from 'cdktf';
 import CorePlatform from './platforms/CorePlatform';
-import { CloudflareProvider } from '@cdktf/provider-cloudflare/lib/provider';
-import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { CloudflareProvider } from './.gen/providers/cloudflare/provider';
+import { AwsProvider } from './.gen/providers/aws/provider';
 
 const app = new App({
   skipValidation: true,

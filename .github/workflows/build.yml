@@ -21,8 +21,16 @@ jobs:
         with:
           node-version: 24.14.1
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.14.8"
+
       - name: Install Dependencies
         run: npm install
+
+      - name: Generate providers
+        run: npm run get
 
       - name: Run Build
         run: npm run synth
@@ -33,4 +41,3 @@ jobs:
           STAGE: "ci-test"
           ROOT_DOMAIN: ${{ secrets.ROOT_DOMAIN }}
           S3_BACKEND_BUCKET: ${{ secrets.S3_BACKEND_BUCKET }}
-          S3_BACKEND_LOCK_TABLE: ${{ secrets.S3_BACKEND_LOCK_TABLE }}

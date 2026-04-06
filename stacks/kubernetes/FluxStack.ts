@@ -1,13 +1,13 @@
 import { Construct } from 'constructs';
 import { Fn, TerraformResource } from 'cdktf';
 import CustomTerraformStack from '../CustomTerraformStack';
-import { KubernetesProvider } from '@cdktf/provider-kubernetes/lib/provider';
-import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
-import { Release } from '@cdktf/provider-helm/lib/release';
-import { Secret } from '@cdktf/provider-kubernetes/lib/secret';
-import { ConfigMap } from '@cdktf/provider-kubernetes/lib/config-map';
-import { Namespace } from '@cdktf/provider-kubernetes/lib/namespace';
-import { DataAwsSecretsmanagerSecretVersion } from '@cdktf/provider-aws/lib/data-aws-secretsmanager-secret-version';
+import { KubernetesProvider } from '../../.gen/providers/kubernetes/provider';
+import { HelmProvider } from '../../.gen/providers/helm/provider';
+import { Release } from '../../.gen/providers/helm/release';
+import { Secret } from '../../.gen/providers/kubernetes/secret';
+import { ConfigMap } from '../../.gen/providers/kubernetes/config-map';
+import { Namespace } from '../../.gen/providers/kubernetes/namespace';
+import { DataAwsSecretsmanagerSecretVersion } from '../../.gen/providers/aws/data-aws-secretsmanager-secret-version';
 
 /**
  * Values injected into every Flux manifest at reconcile time via
