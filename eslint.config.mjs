@@ -5,6 +5,10 @@ import prettierConfig from "eslint-config-prettier";
 
 
 export default [
+  // Global ignores — a standalone ignores-only block applies unconditionally.
+  {
+    ignores: ['node_modules/**', 'cdktf.out/**', 'dist/**', '.gen/**', '__tests__/**'],
+  },
   {
     files: ["**/*.ts"],
     languageOptions: {
@@ -27,11 +31,6 @@ export default [
       "@typescript-eslint/no-unused-vars": ["error"],
       "@typescript-eslint/no-explicit-any": "warn",
     },
-    ignores: [
-        'node_modules/',
-        'cdktf.out/',
-        'dist/'
-    ],
     settings: {
       prettier: prettierConfig,
     },

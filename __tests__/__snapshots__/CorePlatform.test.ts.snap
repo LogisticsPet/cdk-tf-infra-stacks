@@ -1,0 +1,147 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CleanupStack snapshot: pre-destroy terraform_data resource 1`] = `
+{
+  "resource": {
+    "terraform_data": {
+      "pre-destroy-cleanup": {
+        "input": {
+          "cluster_name": "core-eks",
+          "region": "eu-central-1",
+        },
+        "provisioner": [
+          {
+            "local-exec": {
+              "command": "set -euo pipefail
+echo "=== pre-destroy: cluster=$CLUSTER_NAME region=$REGION ==="
+
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION"
+
+# 1. Suspend all Flux kustomizations to prevent reconciliation during teardown
+echo "--- suspending Flux kustomizations"
+kubectl get kustomizations.kustomize.toolkit.fluxcd.io -n flux-system -o name 2>/dev/null | \\
+  xargs -r kubectl patch -n flux-system --type=merge \\
+  -p '{"spec":{"suspend":true}}' || true
+
+# 2. Delete Crossplane IAM objects — finalizers ensure AWS resources are
+#    removed by Crossplane before the k8s objects themselves are deleted
+echo "--- deleting Crossplane IAM resources"
+if kubectl api-resources --api-group=iam.aws.upbound.io --no-headers 2>/dev/null | grep -q .; then
+  kubectl delete rolepolicyattachments.iam.aws.upbound.io,policies.iam.aws.upbound.io,roles.iam.aws.upbound.io \\
+    --all --wait --timeout=120s --ignore-not-found
+fi
+
+# 3. Delete istio-ingress HelmRelease — Flux uninstalls the chart, which
+#    removes the LoadBalancer Service and triggers NLB deletion via aws-lb-controller
+echo "--- deleting istio-ingress HelmRelease"
+if kubectl api-resources --api-group=helm.toolkit.fluxcd.io --no-headers 2>/dev/null | grep -q HelmRelease; then
+  kubectl delete helmrelease istio-ingress -n istio-system --ignore-not-found || true
+fi
+
+# 4a. Wait for LoadBalancer-type Services in istio-system to disappear
+echo "--- waiting for LoadBalancer Services to be removed"
+for i in $(seq 1 12); do
+  LB_COUNT=$(kubectl get svc -n istio-system --no-headers \\
+    -o custom-columns=T:.spec.type 2>/dev/null | grep "^LoadBalancer$" | wc -l | tr -d ' ')
+  echo "  LoadBalancer services remaining: $LB_COUNT (attempt $i/12)"
+  [ "$LB_COUNT" = "0" ] && break
+  sleep 10
+done
+
+# 4b. Safety-net: poll AWS until no cluster-owned NLBs remain
+#    (covers cases where aws-lb-controller is slow or already gone)
+echo "--- polling AWS for cluster-owned NLBs"
+for i in $(seq 1 30); do
+  NLB_COUNT=$(aws resourcegroupstaggingapi get-resources \\
+    --region "$REGION" \\
+    --tag-filters "Key=kubernetes.io/cluster/$CLUSTER_NAME,Values=owned" \\
+    --resource-type-filters "elasticloadbalancing:loadbalancer" \\
+    --query "length(ResourceTagMappingList)" \\
+    --output text 2>/dev/null || echo 0)
+  echo "  NLBs remaining: $NLB_COUNT (attempt $i/30)"
+  [ "$NLB_COUNT" = "0" ] && break
+  sleep 10
+done
+
+echo "=== pre-destroy cleanup complete ==="",
+              "environment": {
+                "CLUSTER_NAME": "core-eks",
+                "REGION": "eu-central-1",
+              },
+              "interpreter": [
+                "/bin/bash",
+                "-c",
+              ],
+              "when": "destroy",
+            },
+          },
+        ],
+      },
+    },
+  },
+}
+`;
+
+exports[`FluxConfigStack snapshot: full 5-tier kustomization structure 1`] = `
+{
+  "data": {
+    "aws_eks_cluster": {
+      "eks-cluster-data": {
+        "name": "core-eks",
+      },
+    },
+  },
+  "provider": {
+    "kubectl": [
+      {
+        "cluster_ca_certificate": "\${base64decode(data.aws_eks_cluster.eks-cluster-data.certificate_authority[0].data)}",
+        "exec": [
+          {
+            "api_version": "client.authentication.k8s.io/v1beta1",
+            "args": [
+              "eks",
+              "get-token",
+              "--cluster-name",
+              "core-eks",
+              "--region",
+              "eu-central-1",
+            ],
+            "command": "aws",
+          },
+        ],
+        "host": "\${data.aws_eks_cluster.eks-cluster-data.endpoint}",
+      },
+    ],
+  },
+  "resource": {
+    "kubectl_manifest": {
+      "flux-apps-kustomization": {
+        "yaml_body": "\${jsonencode({"apiVersion" = "kustomize.toolkit.fluxcd.io/v1", "kind" = "Kustomization", "metadata" = {"name" = "apps", "namespace" = "flux-system"}, "spec" = {"interval" = "5m0s", "retryInterval" = "1m0s", "path" = "./platforms/core/apps", "prune" = true, "wait" = false, "timeout" = "10m0s", "sourceRef" = {"kind" = "GitRepository", "name" = "flux-system"}, "dependsOn" = [{"name" = "platform-post"}], "postBuild" = {"substituteFrom" = [{"kind" = "ConfigMap", "name" = "platform-vars"}]}}})}",
+      },
+      "flux-bootstrap-kustomization": {
+        "yaml_body": "\${jsonencode({"apiVersion" = "kustomize.toolkit.fluxcd.io/v1", "kind" = "Kustomization", "metadata" = {"name" = "platform-bootstrap", "namespace" = "flux-system"}, "spec" = {"interval" = "5m0s", "retryInterval" = "1m0s", "path" = "./platforms/core/platform-bootstrap", "prune" = true, "wait" = true, "timeout" = "15m0s", "sourceRef" = {"kind" = "GitRepository", "name" = "flux-system"}, "postBuild" = {"substituteFrom" = [{"kind" = "ConfigMap", "name" = "platform-vars"}]}}})}",
+      },
+      "flux-git-repository": {
+        "yaml_body": "\${jsonencode({"apiVersion" = "source.toolkit.fluxcd.io/v1", "kind" = "GitRepository", "metadata" = {"name" = "flux-system", "namespace" = "flux-system"}, "spec" = {"interval" = "1m0s", "url" = "ssh://git@github.com/LogisticsPet/gitops-seed", "ref" = {"branch" = "main"}, "secretRef" = {"name" = "flux-git-auth"}}})}",
+      },
+      "flux-platform-kustomization": {
+        "yaml_body": "\${jsonencode({"apiVersion" = "kustomize.toolkit.fluxcd.io/v1", "kind" = "Kustomization", "metadata" = {"name" = "platform", "namespace" = "flux-system"}, "spec" = {"interval" = "5m0s", "retryInterval" = "1m0s", "path" = "./platforms/core/platform", "prune" = true, "wait" = true, "timeout" = "15m0s", "sourceRef" = {"kind" = "GitRepository", "name" = "flux-system"}, "dependsOn" = [{"name" = "platform-providers"}], "postBuild" = {"substituteFrom" = [{"kind" = "ConfigMap", "name" = "platform-vars"}]}}})}",
+      },
+      "flux-post-platform-kustomization": {
+        "yaml_body": "\${jsonencode({"apiVersion" = "kustomize.toolkit.fluxcd.io/v1", "kind" = "Kustomization", "metadata" = {"name" = "platform-post", "namespace" = "flux-system"}, "spec" = {"interval" = "5m0s", "retryInterval" = "1m0s", "path" = "./platforms/core/platform-post", "prune" = true, "wait" = true, "timeout" = "10m0s", "sourceRef" = {"kind" = "GitRepository", "name" = "flux-system"}, "dependsOn" = [{"name" = "platform"}], "postBuild" = {"substituteFrom" = [{"kind" = "ConfigMap", "name" = "platform-vars"}]}}})}",
+      },
+      "flux-providers-kustomization": {
+        "yaml_body": "\${jsonencode({"apiVersion" = "kustomize.toolkit.fluxcd.io/v1", "kind" = "Kustomization", "metadata" = {"name" = "platform-providers", "namespace" = "flux-system"}, "spec" = {"interval" = "5m0s", "retryInterval" = "1m0s", "path" = "./platforms/core/platform-providers", "prune" = true, "wait" = true, "timeout" = "15m0s", "sourceRef" = {"kind" = "GitRepository", "name" = "flux-system"}, "dependsOn" = [{"name" = "platform-bootstrap"}], "postBuild" = {"substituteFrom" = [{"kind" = "ConfigMap", "name" = "platform-vars"}]}}})}",
+      },
+    },
+  },
+  "terraform": {
+    "required_providers": {
+      "kubectl": {
+        "source": "alekc/kubectl",
+        "version": "~> 2.0",
+      },
+    },
+  },
+}
+`;
