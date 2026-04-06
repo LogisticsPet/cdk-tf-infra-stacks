@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { Fn } from 'cdktf';
+import { Fn, TerraformResource } from 'cdktf';
 import CustomTerraformStack from '../CustomTerraformStack';
 import { KubernetesProvider } from '@cdktf/provider-kubernetes/lib/provider';
 import { HelmProvider } from '@cdktf/provider-helm/lib/provider';
@@ -148,7 +148,7 @@ export default class FluxStack extends CustomTerraformStack {
       'imagerepositories.image.toolkit.fluxcd.io',
     ].join(' ');
 
-    new Release(this, 'flux-controllers', {
+    const fluxRelease = new Release(this, 'flux-controllers', {
       name: 'flux2',
       repository: 'https://fluxcd-community.github.io/helm-charts',
       chart: 'flux2',
@@ -159,23 +159,6 @@ export default class FluxStack extends CustomTerraformStack {
       waitForJobs: true,
       timeout: 900,
       dependsOn: [fluxNamespace],
-      provisioners: [
-        {
-          type: 'local-exec',
-          when: 'destroy',
-          interpreter: ['/bin/bash', '-c'],
-          command: `
-aws eks update-kubeconfig --name ${props.clusterName} --region ${props.cluster.region}
-for crd in ${fluxCrds}; do
-  kubectl get "$crd" -A -o json 2>/dev/null | \
-    jq -r '.items[]? | [.metadata.namespace, .metadata.name] | @tsv' | \
-    while IFS=$'\\t' read -r ns name; do
-      kubectl patch "$crd" -n "$ns" "$name" --type=merge -p '{"metadata":{"finalizers":[]}}' 2>/dev/null || true
-    done
-done
-`.trim(),
-        },
-      ],
       set: [
         {
           name: 'imageAutomationController.create',
@@ -194,6 +177,38 @@ done
           value: props.platformVars.FLUX_IMAGE_ROLE_ARN,
         },
       ],
+    });
+
+    // ── Flux finalizer cleanup (destroy-time) ─────────────────────────────
+    // Destroy provisioners may only reference `self.*` — cross-stack tokens
+    // are forbidden.  terraform_data stores clusterName/region in state at
+    // apply time; self.input.* resolves to the stored concrete value on destroy.
+    // Depends on fluxRelease so destroy order is: this first (strips finalizers)
+    // → then fluxRelease (Helm uninstall + CRD removal, no longer blocked).
+    const fluxCleanup = new TerraformResource(this, 'flux-finalizer-cleanup', {
+      terraformResourceType: 'terraform_data',
+      dependsOn: [fluxRelease],
+      provisioners: [
+        {
+          type: 'local-exec',
+          when: 'destroy',
+          interpreter: ['/bin/bash', '-c'],
+          command: `
+aws eks update-kubeconfig --name \${self.input.cluster_name} --region \${self.input.region}
+for crd in ${fluxCrds}; do
+  kubectl get "$crd" -A -o json 2>/dev/null | \\
+    jq -r '.items[]? | [.metadata.namespace, .metadata.name] | @tsv' | \\
+    while IFS=$'\\t' read -r ns name; do
+      kubectl patch "$crd" -n "$ns" "$name" --type=merge -p '{"metadata":{"finalizers":[]}}' 2>/dev/null || true
+    done
+done
+`.trim(),
+        },
+      ],
+    });
+    fluxCleanup.addOverride('input', {
+      cluster_name: props.clusterName,
+      region: props.cluster.region,
     });
 
     // ── SSH credentials (read from AWS Secrets Manager) ───────────────────
